@@ -1,6 +1,6 @@
-import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http, PublicClient, WalletClient } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from './constants'
-import { account, getClient } from './wallet'
+import { Wallet } from './wallet'
 
 // Updated ContractWrapper interface with address field
 interface ContractWrapper {
@@ -22,6 +22,54 @@ interface ContractWrapper {
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
+interface ClientWrapper {
+  publicClient: PublicClient
+  walletClient: WalletClient
+}
+
+const clientCache: { [key: string]: ClientWrapper } = {}
+
+function getClient(chainId: number, rpcUrl: string, wallet: Wallet): ClientWrapper {
+  const cacheKey = `${chainId}-${rpcUrl}`
+  if (clientCache[cacheKey]) {
+    return clientCache[cacheKey]
+  }
+
+  const customChain = {
+    id: chainId,
+    name: `Chain ${chainId}`,
+    network: `network-${chainId}`,
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: {
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
+    },
+  }
+
+  const publicClient = createPublicClient({
+    chain: customChain,
+    transport: http(rpcUrl)
+  })
+
+  const walletClient = createWalletClient({
+    account: wallet.getAccount(),
+    chain: customChain,
+    transport: http(rpcUrl)
+  })
+
+  const wrapper: ClientWrapper = {
+    publicClient,
+    walletClient
+  }
+
+  clientCache[cacheKey] = wrapper
+  return wrapper
+}
+
 // Function to compute contract address
 export function computeXContractAddress(initcode: `0x${string}`, saltHex: `0x${string}` = defaultSalt): Address {
   const initCodeHash = keccak256(initcode)
@@ -35,10 +83,12 @@ export function computeXContractAddress(initcode: `0x${string}`, saltHex: `0x${s
 // Generalized function to deploy a contract using the CREATE2 factory
 export async function deployXContract(
   chainId: number,
+  rpcUrl: string,
+  wallet: Wallet,
   bytecode: `0x${string}`,
   saltHex: `0x${string}` = defaultSalt
 ): Promise<{ contractAddress: Address; receipt: TransactionReceipt }> {
-  const { publicClient, walletClient } = getClient(chainId)
+  const { publicClient, walletClient } = getClient(chainId, rpcUrl, wallet)
   const data = `0x${saltHex.replace(/^0x/, '')}${bytecode.replace(/^0x/, '')}` as `0x${string}`
 
   console.debug('Deploying contract:')
@@ -47,7 +97,7 @@ export async function deployXContract(
   console.debug('Salt:', saltHex)
 
   const hash = await walletClient.sendTransaction({
-    account: account,
+    account: wallet.getAccount(),
     chain: walletClient.chain,
     to: CREATE2_FACTORY_ADDRESS,
     data: data,
@@ -70,15 +120,25 @@ export async function deployXContract(
     status: receipt.status
   })
 
+  if (receipt.status === 'reverted') {
+    throw new Error('Contract deployment failed - transaction reverted')
+  }
+
   const contractAddress = computeXContractAddress(bytecode, saltHex)
   console.debug('Computed contract address:', contractAddress)
+
+  // Verify the contract was actually deployed
+  const code = await publicClient.getBytecode({ address: contractAddress })
+  if (!code || code === '0x') {
+    throw new Error('Contract deployment failed - no code at target address')
+  }
 
   return { contractAddress, receipt }
 }
 
 // Function to check if a contract is deployed at a given address
-export async function isXContractDeployed(chainId: number, address: Address): Promise<boolean> {
-  const { publicClient } = getClient(chainId)
+export async function isXContractDeployed(chainId: number, rpcUrl: string, wallet: Wallet, address: Address): Promise<boolean> {
+  const { publicClient } = getClient(chainId, rpcUrl, wallet)
   try {
     const code = await publicClient.getCode({ address })
     // If the bytecode is not empty, the contract is deployed
@@ -92,12 +152,14 @@ export async function isXContractDeployed(chainId: number, address: Address): Pr
 // Separate sendTx function
 export async function sendTx(
   chainId: number,
+  rpcUrl: string,
+  wallet: Wallet,
   contractAddress: Address,
   abi: Abi,
   functionName: string,
   args: any[] = []
 ): Promise<TransactionReceipt> {
-  const { publicClient, walletClient } = getClient(chainId)
+  const { publicClient, walletClient } = getClient(chainId, rpcUrl, wallet)
   console.debug(`Preparing to send transaction for function ${functionName} with args:`, args)
 
   // 1. Encode the function data
@@ -112,14 +174,14 @@ export async function sendTx(
 
   // 3. Get the nonce (convert to number)
   const nonceBigInt = await publicClient.getTransactionCount({
-    address: account.address,
+    address: wallet.getAccount().address,
     blockTag: 'pending',
   })
   const nonce = Number(nonceBigInt)
 
   // 4. Estimate gas limit
   const gasLimit = await publicClient.estimateGas({
-    account: account.address,
+    account: wallet.getAccount().address,
     to: contractAddress,
     data,
   })
@@ -135,7 +197,7 @@ export async function sendTx(
     gasPrice: gasPrice as bigint,
     nonce: nonce as number,
     chain,
-    account,
+    account: wallet.getAccount(),
   }
 
   // 7. Sign the transaction
@@ -156,12 +218,14 @@ export async function sendTx(
 // Separate call function
 export async function call(
   chainId: number,
+  rpcUrl: string,
+  wallet: Wallet,
   contractAddress: Address,
   abi: Abi,
   functionName: string,
   args: any[] = []
 ): Promise<any> {
-  const { publicClient } = getClient(chainId)
+  const { publicClient } = getClient(chainId, rpcUrl, wallet)
   console.debug(`Calling function ${functionName} with args:`, args)
   
   // Read the contract data
@@ -178,12 +242,14 @@ export async function call(
 // New function for watching events
 export function watchContractEvents(
   chainId: number,
+  rpcUrl: string,
+  wallet: Wallet,
   contractAddress: Address,
   abi: Abi,
   fromBlock: bigint,
   onEvent: (log: Log, block: Block) => void
 ): () => void {
-  const { publicClient } = getClient(chainId)
+  const { publicClient } = getClient(chainId, rpcUrl, wallet)
 
   const unwatch = publicClient.watchContractEvent({
     address: contractAddress,
@@ -207,6 +273,8 @@ export function watchContractEvents(
 // Updated getXContract function
 export function getXContract(
   chainId: number,
+  rpcUrl: string,
+  wallet: Wallet,
   abi: Abi,
   bytecode: `0x${string}`,
   constructorArgs: any[] = [],
@@ -225,12 +293,12 @@ export function getXContract(
   const wrapper: ContractWrapper = {
     address: contractAddress,
     chainId,
-    sendTx: (functionName: string, args: any[] = []) => sendTx(chainId, contractAddress, abi, functionName, args),
-    call: (functionName: string, args: any[] = []) => call(chainId, contractAddress, abi, functionName, args),
-    deploy: () => deployXContract(chainId, deployData, salt),
-    isDeployed: () => isXContractDeployed(chainId, contractAddress),
+    sendTx: (functionName: string, args: any[] = []) => sendTx(chainId, rpcUrl, wallet, contractAddress, abi, functionName, args),
+    call: (functionName: string, args: any[] = []) => call(chainId, rpcUrl, wallet, contractAddress, abi, functionName, args),
+    deploy: () => deployXContract(chainId, rpcUrl, wallet, deployData, salt),
+    isDeployed: () => isXContractDeployed(chainId, rpcUrl, wallet, contractAddress),
     watchEvents: (fromBlock: bigint, onEvent: (log: Log, block: Block) => void) => 
-      watchContractEvents(chainId, contractAddress, abi, fromBlock, onEvent),
+      watchContractEvents(chainId, rpcUrl, wallet, contractAddress, abi, fromBlock, onEvent),
   }
 
   return wrapper
