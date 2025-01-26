@@ -18,7 +18,9 @@
     "smart-contracts",
     "blockchain",
     "web3",
-    "multichain"
+    "multichain",
+    "create2",
+    "deterministic-deployment"
   ],
   "author": "",
   "license": "MIT",
@@ -30,7 +32,9 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^18.15.11",
+    "semantic-release": "^23.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.3",
     "vitest": "^1.2.1"

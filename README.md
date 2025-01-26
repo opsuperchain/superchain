@@ -1,6 +1,13 @@
-# Superchain Starter
+# superchain-starter
 
-A library for deploying and managing contracts across multiple EVM chains.
+A TypeScript library for deploying and managing smart contracts across multiple EVM chains, with support for deterministic deployments using CREATE2.
+
+## Features
+- 🔄 Deploy contracts to multiple chains with one interface
+- 🎯 Use CREATE2 for deterministic addresses across chains
+- 🔒 Type-safe contract interactions
+- 🌐 Works in Node.js and browsers (ESM)
+- ⚡ Built on [viem](https://viem.sh) for reliable blockchain interactions
 
 ## Installation
 
@@ -13,27 +20,24 @@ npm install superchain-starter
 ```html
 <script type="module">
   import { StandardSuperRPC, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
-  
-  // Your code here...
 </script>
 ```
 
-## Usage
+## Quick Start
 
-### Basic Example
-```javascript
+```typescript
 import { StandardSuperRPC, SuperWallet, getSuperContract } from 'superchain-starter'
 
-// Setup RPC endpoints
+// 1. Setup RPC endpoints
 const rpc = new StandardSuperRPC({
   901: 'http://127.0.0.1:9545',  // Chain A
   902: 'http://127.0.0.1:9546'   // Chain B
 })
 
-// Create wallet
+// 2. Create wallet
 const wallet = new SuperWallet('0xYOUR_PRIVATE_KEY')
 
-// Create contract instance
+// 3. Create contract instance
 const contract = getSuperContract(
   rpc,
   wallet,
@@ -42,22 +46,46 @@ const contract = getSuperContract(
   [/* constructor args */]
 )
 
-// Deploy to Chain A
+// 4. Deploy to Chain A
 const receipt = await contract.deploy(901)
 console.log('Deployed to:', contract.address)
 
-// Call contract methods
+// 5. Call contract methods
 const result = await contract.call(901, 'methodName', [arg1, arg2])
 
-// Send transactions
+// 6. Send transactions
 const txReceipt = await contract.send(901, 'methodName', [arg1, arg2])
 ```
 
-### Advanced Features
-- Deploy contracts to multiple chains
-- Use CREATE2 for deterministic addresses across chains
-- Manage contract interactions with type safety
-- Handle cross-chain deployments efficiently
+## Deterministic Deployments
+
+Deploy contracts to the same address on multiple chains:
+
+```typescript
+// Create contract with specific salt for deterministic address
+const contract = getSuperContract(
+  rpc,
+  wallet,
+  CONTRACT_ABI,
+  CONTRACT_BYTECODE,
+  [/* constructor args */],
+  '0xYOUR_SALT_HERE'  // Optional: provide a salt for deterministic address
+)
+
+// Deploy to multiple chains - will have same address!
+await contract.deploy(901)  // Chain A
+await contract.deploy(902)  // Chain B
+```
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests (requires supersim)
+npm test
+```
 
 ## License
 MIT 
