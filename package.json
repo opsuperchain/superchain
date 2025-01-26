@@ -1,6 +1,6 @@
 {
   "name": "superchain-starter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A library for deploying and managing contracts across multiple EVM chains",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -40,4 +40,3 @@
     "vitest": "^1.2.1"
   }
 }
-
