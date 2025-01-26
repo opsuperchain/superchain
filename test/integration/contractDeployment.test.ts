@@ -1,5 +1,5 @@
 import { Wallet } from '../../src/wallet'
-import { getXContract } from '../../src/contractFactory'
+import { XChainContract } from '../../src/contractFactory'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
 import { describe, it, expect, beforeAll } from '@jest/globals'
 
@@ -168,7 +168,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = getXContract(
+    const contract = new XChainContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
@@ -178,13 +178,18 @@ describe('Contract Deployment Integration', () => {
       uniqueSalt
     )
 
+    // First verify contract is not already deployed at the computed address
+    const isDeployedBefore = await contract.isDeployed()
+    expect(isDeployedBefore).toBe(false)
+    console.log('Verified contract is not already deployed at computed address')
+
     // Deploy using CREATE2
     console.log('Deploying contract using CREATE2...')
-    const { contractAddress, receipt } = await contract.deploy()
+    const receipt = await contract.deploy()
     console.log('CREATE2 deployment receipt:', receipt)
 
     expect(receipt.status).toBe('success')
-    expect(contractAddress).toBeDefined()
+    expect(contract.address).toBeDefined()
 
     // Test contract interaction using wrapper
     console.log('Testing contract interaction...')
@@ -194,8 +199,8 @@ describe('Contract Deployment Integration', () => {
     console.log('Contract interaction successful')
 
     // Verify the contract is at the computed address
-    const isDeployed = await contract.isDeployed()
-    expect(isDeployed).toBe(true)
+    const isDeployedAfter = await contract.isDeployed()
+    expect(isDeployedAfter).toBe(true)
     console.log('Contract verified at computed address')
   }, 30000)
 
@@ -215,7 +220,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = getXContract(
+    const contract = new XChainContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
@@ -225,13 +230,18 @@ describe('Contract Deployment Integration', () => {
       uniqueSalt
     )
 
+    // First verify contract is not already deployed at the computed address
+    const isDeployedBefore = await contract.isDeployed()
+    expect(isDeployedBefore).toBe(false)
+    console.log('Verified contract is not already deployed at computed address')
+
     // Deploy using CREATE2
     console.log('Deploying contract using CREATE2...')
-    const { contractAddress, receipt } = await contract.deploy()
+    const receipt = await contract.deploy()
     console.log('CREATE2 deployment receipt:', receipt)
 
     expect(receipt.status).toBe('success')
-    expect(contractAddress).toBeDefined()
+    expect(contract.address).toBeDefined()
 
     // Get initial value (should be 100)
     console.log('Testing initial value...')
