@@ -1,4 +1,4 @@
-import { privateKeyToAccount } from 'viem/accounts'
+import { privateKeyToAccount, Account, Address  } from 'viem/accounts'
 
 // TODO: add passkey support
 export class SuperWallet {
@@ -8,7 +8,11 @@ export class SuperWallet {
     this.account = privateKeyToAccount(privateKey)
   }
 
-  getAccount() {
+  getAccount(): Account {
     return this.account;
+  }
+
+  getAddress(): Address {
+    return this.account.address;
   }
 }
