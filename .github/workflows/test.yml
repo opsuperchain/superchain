@@ -20,6 +20,11 @@ jobs:
       - name: Install dependencies and generate lock file
         run: npm install
       
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      
       - name: Install supersim
         run: npm install -g supersim
       
