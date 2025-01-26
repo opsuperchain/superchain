@@ -1,5 +1,5 @@
 import { Wallet } from '../../src/wallet'
-import { SuperContract } from '../../src/contractFactory'
+import { SuperContract } from '../../src/SuperContract'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
 import { describe, it, expect, beforeAll } from '@jest/globals'
 
