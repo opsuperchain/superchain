@@ -1,4 +1,4 @@
-import { SuperWallet } from '../../src/SuperWallet'
+import { Wallet } from '../../src/SuperWallet'
 import { SuperContract } from '../../src/SuperContract'
 import { StandardSuperRPC } from '../../src/SuperRPC'
 import { createPublicClient, createWalletClient, http, parseEther, Account, Chain } from 'viem'
@@ -71,7 +71,7 @@ describe('Contract Deployment Integration', () => {
 
   // Check if chains are running and accounts have balance
   beforeAll(async () => {
-    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
     account = wallet.getAccount()
 
     // Initialize Chain A
@@ -223,7 +223,7 @@ describe('Contract Deployment Integration', () => {
     }
 
     // Create wallet instance
-    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
@@ -276,7 +276,7 @@ describe('Contract Deployment Integration', () => {
 
   it('should deploy contracts with same address on both chains using CREATE2', async () => {
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
     
     const contract = new SuperContract(
       rpc,

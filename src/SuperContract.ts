@@ -1,6 +1,6 @@
 import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from './constants'
-import { SuperWallet } from './SuperWallet'
+import { Wallet } from './SuperWallet'
 import { SuperRPC } from './SuperRPC'
 
 // Default salt value
@@ -11,7 +11,7 @@ export class SuperContract {
 
   constructor(
     private rpc: SuperRPC,
-    private wallet: SuperWallet,
+    private wallet: Wallet,
     private abi: Abi,
     private bytecode: `0x${string}`,
     private constructorArgs: any[] = [],

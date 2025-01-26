@@ -3,13 +3,13 @@
  */
 
 // Export all Super components
-export { SuperWallet } from './SuperWallet'
+export { Wallet as SuperWallet } from './SuperWallet'
 export { SuperContract } from './SuperContract'
 export { SuperRPC, StandardSuperRPC, ChainIdNotFoundError } from './SuperRPC'
 export { CREATE2_FACTORY_ADDRESS } from './constants'
 
 // Import types we need
-import { SuperWallet } from './SuperWallet'
+import { Wallet } from './SuperWallet'
 import { SuperContract } from './SuperContract'
 import { SuperRPC } from './SuperRPC'
 import type { Address } from 'viem'
@@ -26,13 +26,13 @@ import type { Address } from 'viem'
  */
 export function getSuperContract(
   rpc: SuperRPC,
-  wallet: SuperWallet | `0x${string}`,
+  wallet: Wallet | `0x${string}`,
   abi: any[],
   bytecode: `0x${string}`,
   constructorArgs: any[] = [],
   salt?: `0x${string}`
 ): SuperContract {
-  const superWallet = wallet instanceof SuperWallet ? wallet : new SuperWallet(wallet)
+  const superWallet = wallet instanceof Wallet ? wallet : new Wallet(wallet)
   return new SuperContract(
     rpc,
     superWallet,
