@@ -1,39 +1,40 @@
 {
   "name": "superchain-starter",
   "version": "0.1.0",
-  "description": "A starter library for superchain development",
+  "description": "A library for deploying and managing contracts across multiple EVM chains",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
     "test": "jest",
-    "test:unit": "jest test/unit",
-    "test:integration": "jest test/integration",
-    "prepare": "npm run build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["superchain", "blockchain", "typescript"],
+  "keywords": [
+    "ethereum",
+    "smart-contracts",
+    "blockchain",
+    "web3",
+    "multichain"
+  ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/superchain-starter.git"
+  },
   "dependencies": {
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.11.0",
-    "jest": "^29.7.0",
-    "prettier": "^3.2.0",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/test/**/*.test.ts"
-    ]
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.3"
   }
 }

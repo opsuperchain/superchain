@@ -1,0 +1,45 @@
+name: Run Tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install supersim
+        run: npm install -g @superchain/supersim
+      
+      - name: Start supersim in background
+        run: npx supersim &
+        
+      - name: Wait for chains to start
+        run: |
+          # Wait for up to 30 seconds for the chains to start
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:9545 > /dev/null && curl -s http://127.0.0.1:9546 > /dev/null; then
+              echo "Chains are running"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timeout waiting for chains to start"
+              exit 1
+            fi
+            echo "Waiting for chains to start..."
+            sleep 1
+          done
+      
+      - name: Run tests
+        run: npm test 
