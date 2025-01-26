@@ -1,28 +1,33 @@
-import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http, PublicClient, WalletClient } from 'viem'
+import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from './constants'
-import { Wallet } from './wallet'
+import { SuperWallet } from './SuperWallet'
 import { SuperRPC } from './SuperRPC'
 
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
 export class SuperContract {
-  private publicClient: PublicClient
-  private walletClient: WalletClient
   public readonly address: Address
-  public readonly chainId: number
 
   constructor(
-    chainId: number,
-    rpc: SuperRPC,
-    private wallet: Wallet,
+    private rpc: SuperRPC,
+    private wallet: SuperWallet,
     private abi: Abi,
     private bytecode: `0x${string}`,
     private constructorArgs: any[] = [],
     private salt: `0x${string}` = defaultSalt
   ) {
-    this.chainId = chainId
-    const rpcUrl = rpc.getUrl(chainId)
+    // Compute the deterministic address
+    const deployData = encodeDeployData({
+      abi,
+      bytecode,
+      args: constructorArgs
+    })
+    this.address = this.computeAddress(deployData)
+  }
+
+  private getClients(chainId: number) {
+    const rpcUrl = this.rpc.getUrl(chainId)
     
     const customChain = {
       id: chainId,
@@ -39,24 +44,17 @@ export class SuperContract {
       },
     }
 
-    this.publicClient = createPublicClient({
-      chain: customChain,
-      transport: http(rpcUrl)
-    })
-
-    this.walletClient = createWalletClient({
-      account: wallet.getAccount(),
-      chain: customChain,
-      transport: http(rpcUrl)
-    })
-
-    // Compute the deterministic address
-    const deployData = encodeDeployData({
-      abi,
-      bytecode,
-      args: constructorArgs
-    })
-    this.address = this.computeAddress(deployData)
+    return {
+      publicClient: createPublicClient({
+        chain: customChain,
+        transport: http(rpcUrl)
+      }),
+      walletClient: createWalletClient({
+        account: this.wallet.getAccount(),
+        chain: customChain,
+        transport: http(rpcUrl)
+      })
+    }
   }
 
   private computeAddress(initcode: `0x${string}`): Address {
@@ -68,7 +66,8 @@ export class SuperContract {
     })
   }
 
-  async deploy(): Promise<TransactionReceipt> {
+  async deploy(chainId: number): Promise<TransactionReceipt> {
+    const { publicClient, walletClient } = this.getClients(chainId)
     const deployData = encodeDeployData({
       abi: this.abi,
       bytecode: this.bytecode,
@@ -78,13 +77,13 @@ export class SuperContract {
     const data = `0x${this.salt.replace(/^0x/, '')}${deployData.replace(/^0x/, '')}` as `0x${string}`
 
     console.debug('Deploying contract:')
-    console.debug('Chain ID:', this.chainId)
+    console.debug('Chain ID:', chainId)
     console.debug('To (CREATE2 Factory):', CREATE2_FACTORY_ADDRESS)
     console.debug('Salt:', this.salt)
 
-    const hash = await this.walletClient.sendTransaction({
+    const hash = await walletClient.sendTransaction({
       account: this.wallet.getAccount(),
-      chain: this.walletClient.chain,
+      chain: walletClient.chain,
       to: CREATE2_FACTORY_ADDRESS,
       data: data,
       gas: BigInt(5000000),
@@ -92,7 +91,7 @@ export class SuperContract {
 
     console.debug('Transaction sent. Hash:', hash)
 
-    const receipt = await this.publicClient.waitForTransactionReceipt({ 
+    const receipt = await publicClient.waitForTransactionReceipt({ 
       hash,
       pollingInterval: 100,
       retryDelay: 100,
@@ -111,7 +110,7 @@ export class SuperContract {
     }
 
     // Verify the contract was actually deployed
-    const code = await this.publicClient.getBytecode({ address: this.address })
+    const code = await publicClient.getBytecode({ address: this.address })
     if (!code || code === '0x') {
       throw new Error('Contract deployment failed - no code at target address')
     }
@@ -119,9 +118,10 @@ export class SuperContract {
     return receipt
   }
 
-  async isDeployed(): Promise<boolean> {
+  async isDeployed(chainId: number): Promise<boolean> {
+    const { publicClient } = this.getClients(chainId)
     try {
-      const code = await this.publicClient.getCode({ address: this.address })
+      const code = await publicClient.getCode({ address: this.address })
       return code !== undefined && code !== '0x'
     } catch (error) {
       console.error('Error checking contract deployment:', error)
@@ -129,7 +129,8 @@ export class SuperContract {
     }
   }
 
-  async sendTx(functionName: string, args: any[] = []): Promise<TransactionReceipt> {
+  async sendTx(chainId: number, functionName: string, args: any[] = []): Promise<TransactionReceipt> {
+    const { publicClient, walletClient } = this.getClients(chainId)
     console.debug(`Preparing to send transaction for function ${functionName} with args:`, args)
 
     const data = encodeFunctionData({
@@ -138,18 +139,18 @@ export class SuperContract {
       args,
     })
 
-    const chain = this.walletClient.chain
-    const nonceBigInt = await this.publicClient.getTransactionCount({
+    const chain = walletClient.chain
+    const nonceBigInt = await publicClient.getTransactionCount({
       address: this.wallet.getAccount().address,
       blockTag: 'pending',
     })
     const nonce = Number(nonceBigInt)
-    const gasLimit = await this.publicClient.estimateGas({
+    const gasLimit = await publicClient.estimateGas({
       account: this.wallet.getAccount().address,
       to: this.address,
       data,
     })
-    const gasPrice = await this.publicClient.getGasPrice()
+    const gasPrice = await publicClient.getGasPrice()
 
     const transaction = {
       to: this.address,
@@ -161,22 +162,23 @@ export class SuperContract {
       account: this.wallet.getAccount(),
     }
 
-    const serializedTransaction = await this.walletClient.signTransaction(transaction)
+    const serializedTransaction = await walletClient.signTransaction(transaction)
     console.debug(`${functionName} transaction signed. Serialized:`, serializedTransaction)
 
-    const hash = await this.walletClient.sendRawTransaction({ serializedTransaction })
+    const hash = await walletClient.sendRawTransaction({ serializedTransaction })
     console.debug(`${functionName} raw transaction sent. Hash:`, hash)
 
-    const receipt = await this.publicClient.waitForTransactionReceipt({ hash })
+    const receipt = await publicClient.waitForTransactionReceipt({ hash })
     console.debug(`${functionName} transaction receipt:`, receipt)
 
     return receipt
   }
 
-  async call(functionName: string, args: any[] = []): Promise<any> {
+  async call(chainId: number, functionName: string, args: any[] = []): Promise<any> {
+    const { publicClient } = this.getClients(chainId)
     console.debug(`Calling function ${functionName} with args:`, args)
     
-    const result = await this.publicClient.readContract({
+    const result = await publicClient.readContract({
       address: this.address,
       abi: this.abi,
       functionName,
@@ -186,14 +188,15 @@ export class SuperContract {
     return result
   }
 
-  watchEvents(fromBlock: bigint, onEvent: (log: Log, block: Block) => void): () => void {
-    const unwatch = this.publicClient.watchContractEvent({
+  watchEvents(chainId: number, fromBlock: bigint, onEvent: (log: Log, block: Block) => void): () => void {
+    const { publicClient } = this.getClients(chainId)
+    const unwatch = publicClient.watchContractEvent({
       address: this.address,
       abi: this.abi,
       onLogs: async (logs: Log[]) => {
         for (const log of logs) {
           if (log.blockNumber) {
-            const block = await this.publicClient.getBlock({ blockNumber: log.blockNumber })
+            const block = await publicClient.getBlock({ blockNumber: log.blockNumber })
             onEvent(log, block)
           } else {
             console.warn('Event received without block number:', log)

@@ -1,7 +1,7 @@
 import { privateKeyToAccount } from 'viem/accounts'
 
 // TODO: add passkey support
-export class Wallet {
+export class SuperWallet {
   private account;
 
   constructor(privateKey: `0x${string}`) {

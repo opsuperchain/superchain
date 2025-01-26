@@ -1,4 +1,4 @@
-import { Wallet } from '../../src/wallet'
+import { SuperWallet } from '../../src/SuperWallet'
 import { SuperContract } from '../../src/SuperContract'
 import { StandardSuperRPC } from '../../src/SuperRPC'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
@@ -67,7 +67,7 @@ describe('Contract Deployment Integration', () => {
         transport: http(ANVIL_RPC_URL)
       })
 
-      const wallet = new Wallet(ANVIL_PRIVATE_KEY)
+      const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
       account = wallet.getAccount()
       const balance = await publicClient.getBalance({ address: account.address })
       
@@ -168,12 +168,11 @@ describe('Contract Deployment Integration', () => {
     }
 
     // Create wallet instance
-    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const contract = new SuperContract(
-      ANVIL_CHAIN_ID,
       rpc,
       wallet,
       TEST_CONTRACT_ABI,
@@ -183,13 +182,13 @@ describe('Contract Deployment Integration', () => {
     )
 
     // First verify contract is not already deployed at the computed address
-    const isDeployedBefore = await contract.isDeployed()
+    const isDeployedBefore = await contract.isDeployed(ANVIL_CHAIN_ID)
     expect(isDeployedBefore).toBe(false)
     console.log('Verified contract is not already deployed at computed address')
 
     // Deploy using CREATE2
     console.log('Deploying contract using CREATE2...')
-    const receipt = await contract.deploy()
+    const receipt = await contract.deploy(ANVIL_CHAIN_ID)
     console.log('CREATE2 deployment receipt:', receipt)
 
     expect(receipt.status).toBe('success')
@@ -197,13 +196,13 @@ describe('Contract Deployment Integration', () => {
 
     // Test contract interaction using wrapper
     console.log('Testing contract interaction...')
-    const value = await contract.call('x')
+    const value = await contract.call(ANVIL_CHAIN_ID, 'x')
     console.log('Retrieved value:', value?.toString())
     expect(value).toBe(100n)
     console.log('Contract interaction successful')
 
     // Verify the contract is at the computed address
-    const isDeployedAfter = await contract.isDeployed()
+    const isDeployedAfter = await contract.isDeployed(ANVIL_CHAIN_ID)
     expect(isDeployedAfter).toBe(true)
     console.log('Contract verified at computed address')
   }, 30000)
@@ -220,12 +219,11 @@ describe('Contract Deployment Integration', () => {
     }
 
     // Create wallet instance
-    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const contract = new SuperContract(
-      ANVIL_CHAIN_ID,
       rpc,
       wallet,
       TEST_CONTRACT_ABI,
@@ -235,33 +233,31 @@ describe('Contract Deployment Integration', () => {
     )
 
     // First verify contract is not already deployed at the computed address
-    const isDeployedBefore = await contract.isDeployed()
+    const isDeployedBefore = await contract.isDeployed(ANVIL_CHAIN_ID)
     expect(isDeployedBefore).toBe(false)
     console.log('Verified contract is not already deployed at computed address')
 
     // Deploy using CREATE2
     console.log('Deploying contract using CREATE2...')
-    const receipt = await contract.deploy()
+    const receipt = await contract.deploy(ANVIL_CHAIN_ID)
     console.log('CREATE2 deployment receipt:', receipt)
 
     expect(receipt.status).toBe('success')
     expect(contract.address).toBeDefined()
 
     // Get initial value (should be 100)
-    console.log('Testing initial value...')
-    const initialValue = await contract.call('x')
+    const initialValue = await contract.call(ANVIL_CHAIN_ID, 'x')
     console.log('Initial value:', initialValue?.toString())
     expect(initialValue).toBe(100n)
 
     // Set value to 42
     console.log('Setting value to 42...')
-    const setReceipt = await contract.sendTx('setX', [42])
+    const setReceipt = await contract.sendTx(ANVIL_CHAIN_ID, 'setX', [42n])
     console.log('Set value receipt:', setReceipt)
     expect(setReceipt.status).toBe('success')
 
     // Get updated value (should be 42)
-    console.log('Testing updated value...')
-    const updatedValue = await contract.call('x')
+    const updatedValue = await contract.call(ANVIL_CHAIN_ID, 'x')
     console.log('Updated value:', updatedValue?.toString())
     expect(updatedValue).toBe(42n)
     console.log('Value successfully updated to 42')
