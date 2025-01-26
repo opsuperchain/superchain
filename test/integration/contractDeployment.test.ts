@@ -1,5 +1,5 @@
 import { Wallet } from '../../src/wallet'
-import { XContract } from '../../src/contractFactory'
+import { SuperContract } from '../../src/contractFactory'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
 import { describe, it, expect, beforeAll } from '@jest/globals'
 
@@ -168,7 +168,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = new XContract(
+    const contract = new SuperContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
@@ -220,7 +220,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = new XContract(
+    const contract = new SuperContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
