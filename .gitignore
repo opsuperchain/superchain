@@ -25,4 +25,8 @@ coverage/
 
 # Logs
 logs/
-*.log 
+*.log
+
+# Foundry
+out/
+cache/
