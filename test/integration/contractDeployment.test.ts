@@ -6,6 +6,11 @@ import { describe, it, expect, beforeAll } from '@jest/globals'
 // Test contract ABI and bytecode
 const TEST_CONTRACT_ABI = [
   {
+    type: 'constructor' as const,
+    inputs: [{ type: 'uint256', name: '_initialValue' }],
+    stateMutability: 'nonpayable' as const
+  },
+  {
     type: 'function' as const,
     name: 'x',
     inputs: [],
@@ -22,7 +27,7 @@ const TEST_CONTRACT_ABI = [
 ] as const;
 
 // This is the compiled bytecode from our TestContract.sol
-const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b5060b18061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630c55699c1460375780634018d9aa146051575b600080fd5b603f60005481565b60405190815260200160405180910390f35b6061605c3660046063565b600055565b005b600060208284031215607457600080fd5b503591905056fea264697066735822122016aefb46deda4932682978cf35aa73c8a486f9614d924bbd6cfaadc31cfed99864736f6c63430008130033' as `0x${string}`
+const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b5060405161010f38038061010f83398101604081905261002f91610037565b600055610050565b60006020828403121561004957600080fd5b5051919050565b60b18061005e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630c55699c1460375780634018d9aa146051575b600080fd5b603f60005481565b60405190815260200160405180910390f35b6061605c3660046063565b600055565b005b600060208284031215607457600080fd5b503591905056fea264697066735822122034362d374f123dbd53fa899d12d79e6a4339cc81cc43fca80b3c2faae49f0e5864736f6c63430008130033' as `0x${string}`
 
 describe('Contract Deployment Integration', () => {
   const ANVIL_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -93,7 +98,8 @@ describe('Contract Deployment Integration', () => {
       abi: TEST_CONTRACT_ABI,
       bytecode: TEST_CONTRACT_BYTECODE,
       chain: anvilChain,
-      account
+      account,
+      args: [100n]  // Initial value of 100
     })
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
@@ -109,7 +115,7 @@ describe('Contract Deployment Integration', () => {
     // Test contract interaction
     console.log('Testing contract interaction...')
     
-    // Get initial value (should be 0)
+    // Get initial value (should be 100)
     const initialValue = await publicClient.readContract({
       address: receipt.contractAddress,
       abi: TEST_CONTRACT_ABI,
@@ -117,7 +123,7 @@ describe('Contract Deployment Integration', () => {
     })
 
     console.log('Initial value:', initialValue?.toString())
-    expect(initialValue).toBe(0n)
+    expect(initialValue).toBe(100n)
 
     // Set value to 42
     console.log('Setting value to 42...')
@@ -168,7 +174,7 @@ describe('Contract Deployment Integration', () => {
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
-      [],  // No constructor args
+      [100n],  // Initial value of 100
       uniqueSalt
     )
 
@@ -184,7 +190,7 @@ describe('Contract Deployment Integration', () => {
     console.log('Testing contract interaction...')
     const value = await contract.call('x')
     console.log('Retrieved value:', value?.toString())
-    expect(value).toBe(0n)
+    expect(value).toBe(100n)
     console.log('Contract interaction successful')
 
     // Verify the contract is at the computed address
@@ -215,7 +221,7 @@ describe('Contract Deployment Integration', () => {
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
-      [],  // No constructor args
+      [100n],  // Initial value of 100
       uniqueSalt
     )
 
@@ -227,11 +233,11 @@ describe('Contract Deployment Integration', () => {
     expect(receipt.status).toBe('success')
     expect(contractAddress).toBeDefined()
 
-    // Get initial value (should be 0)
+    // Get initial value (should be 100)
     console.log('Testing initial value...')
     const initialValue = await contract.call('x')
     console.log('Initial value:', initialValue?.toString())
-    expect(initialValue).toBe(0n)
+    expect(initialValue).toBe(100n)
 
     // Set value to 42
     console.log('Setting value to 42...')
