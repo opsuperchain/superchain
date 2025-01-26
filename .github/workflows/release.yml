@@ -1,12 +1,16 @@
 name: Release
 on:
-  push:
+  workflow_run:
+    workflows: ["Run Tests"]
+    types:
+      - completed
     branches: [ main ]
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,13 +24,6 @@ jobs:
       
       - name: Install dependencies
         run: npm install
-      
-      - name: Run tests
-        run: |
-          npm install -g supersim
-          npx supersim &
-          sleep 5  # Wait for chains to start
-          npm test
       
       - name: Release
         env:
