@@ -1,5 +1,6 @@
 import { Wallet } from '../../src/wallet'
 import { SuperContract } from '../../src/SuperContract'
+import { StandardSuperRPC } from '../../src/SuperRPC'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
 import { describe, it, expect, beforeAll } from '@jest/globals'
 
@@ -33,6 +34,9 @@ describe('Contract Deployment Integration', () => {
   const ANVIL_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
   const ANVIL_CHAIN_ID = 901
   const ANVIL_RPC_URL = 'http://localhost:9545'
+  const rpc = new StandardSuperRPC({
+    [ANVIL_CHAIN_ID]: ANVIL_RPC_URL
+  })
 
   let isAnvilRunning = false
   let hasBalance = false
@@ -170,7 +174,7 @@ describe('Contract Deployment Integration', () => {
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const contract = new SuperContract(
       ANVIL_CHAIN_ID,
-      ANVIL_RPC_URL,
+      rpc,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
@@ -222,7 +226,7 @@ describe('Contract Deployment Integration', () => {
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const contract = new SuperContract(
       ANVIL_CHAIN_ID,
-      ANVIL_RPC_URL,
+      rpc,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,

@@ -1,6 +1,7 @@
 import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http, PublicClient, WalletClient } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from './constants'
 import { Wallet } from './wallet'
+import { SuperRPC } from './SuperRPC'
 
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
@@ -13,7 +14,7 @@ export class SuperContract {
 
   constructor(
     chainId: number,
-    rpcUrl: string,
+    rpc: SuperRPC,
     private wallet: Wallet,
     private abi: Abi,
     private bytecode: `0x${string}`,
@@ -21,6 +22,7 @@ export class SuperContract {
     private salt: `0x${string}` = defaultSalt
   ) {
     this.chainId = chainId
+    const rpcUrl = rpc.getUrl(chainId)
     
     const customChain = {
       id: chainId,
