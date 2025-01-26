@@ -5,7 +5,7 @@ import { Wallet } from './wallet'
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
-export class XChainContract {
+export class XContract {
   private publicClient: PublicClient
   private walletClient: WalletClient
   public readonly address: Address

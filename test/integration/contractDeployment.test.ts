@@ -1,5 +1,5 @@
 import { Wallet } from '../../src/wallet'
-import { XChainContract } from '../../src/contractFactory'
+import { XContract } from '../../src/contractFactory'
 import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
 import { describe, it, expect, beforeAll } from '@jest/globals'
 
@@ -31,8 +31,8 @@ const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b506040516101
 
 describe('Contract Deployment Integration', () => {
   const ANVIL_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-  const ANVIL_CHAIN_ID = 31337
-  const ANVIL_RPC_URL = 'http://localhost:8545'
+  const ANVIL_CHAIN_ID = 901
+  const ANVIL_RPC_URL = 'http://localhost:9545'
 
   let isAnvilRunning = false
   let hasBalance = false
@@ -168,7 +168,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = new XChainContract(
+    const contract = new XContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
@@ -220,7 +220,7 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = new XChainContract(
+    const contract = new XContract(
       ANVIL_CHAIN_ID,
       ANVIL_RPC_URL,
       wallet,
