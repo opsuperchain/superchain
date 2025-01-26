@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies and generate lock file
         run: npm install
       
+      - name: Build TypeScript
+        run: npm run build
+      
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
