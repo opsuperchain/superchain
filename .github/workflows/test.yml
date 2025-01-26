@@ -21,7 +21,7 @@ jobs:
         run: npm install
       
       - name: Install supersim
-        run: npm install -g @superchain/supersim
+        run: npm install -g supersim
       
       - name: Start supersim in background
         run: npx supersim &
