@@ -15,9 +15,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          cache: 'npm'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies and generate lock file
+        run: npm install
       
       - name: Install supersim
         run: npm install -g @superchain/supersim
