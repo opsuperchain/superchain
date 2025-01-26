@@ -17,23 +17,19 @@ jobs:
           node-version: '18.x'
           cache: 'npm'
       
-      - name: Install dependencies and generate lock file
+      - name: Install dependencies
         run: npm install
-      
-      - name: Build TypeScript
-        run: npm run build
       
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
       
-      - name: Install supersim
-        run: npm install -g supersim
-      
       - name: Start supersim in background
-        run: npx supersim &
-        
+        run: |
+          npm install -g supersim
+          npx supersim &
+          
       - name: Wait for chains to start
         run: |
           # Wait for up to 30 seconds for the chains to start
@@ -51,4 +47,8 @@ jobs:
           done
       
       - name: Run tests
-        run: npm test 
+        run: npm test
+        env:
+          # Add any environment variables needed for tests
+          CI: true
+          NODE_ENV: test 

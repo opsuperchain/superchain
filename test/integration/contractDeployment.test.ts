@@ -1,8 +1,7 @@
 import { SuperWallet } from '../../src/SuperWallet'
 import { SuperContract } from '../../src/SuperContract'
 import { StandardSuperRPC } from '../../src/SuperRPC'
-import { createPublicClient, http, parseEther, createWalletClient, Chain, Account } from 'viem'
-import { describe, it, expect, beforeAll } from '@jest/globals'
+import { createPublicClient, createWalletClient, http, parseEther, Account, Chain } from 'viem'
 
 // Test contract ABI and bytecode
 const TEST_CONTRACT_ABI = [
