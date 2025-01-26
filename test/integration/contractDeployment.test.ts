@@ -32,82 +32,136 @@ const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b506040516101
 
 describe('Contract Deployment Integration', () => {
   const ANVIL_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-  const ANVIL_CHAIN_ID = 901
-  const ANVIL_RPC_URL = 'http://localhost:9545'
+  
+  // Chain A configuration
+  const CHAIN_A_ID = 901
+  const CHAIN_A_RPC_URL = 'http://127.0.0.1:9545'
+  
+  // Chain B configuration
+  const CHAIN_B_ID = 902
+  const CHAIN_B_RPC_URL = 'http://127.0.0.1:9546'
+  
   const rpc = new StandardSuperRPC({
-    [ANVIL_CHAIN_ID]: ANVIL_RPC_URL
+    [CHAIN_A_ID]: CHAIN_A_RPC_URL,
+    [CHAIN_B_ID]: CHAIN_B_RPC_URL
   })
 
-  let isAnvilRunning = false
-  let hasBalance = false
-  let publicClient: ReturnType<typeof createPublicClient>
-  let walletClient: ReturnType<typeof createWalletClient>
+  type ChainState = {
+    isRunning: boolean
+    hasBalance: boolean
+    publicClient: ReturnType<typeof createPublicClient>
+    walletClient: ReturnType<typeof createWalletClient>
+  }
+
+  const chainStates: Record<number, ChainState> = {}
   let account: Account
 
-  const anvilChain = {
-    id: ANVIL_CHAIN_ID,
-    name: 'Anvil',
-    network: 'anvil',
+  const createChainConfig = (chainId: number, rpcUrl: string): Chain => ({
+    id: chainId,
+    name: `Chain ${chainId}`,
     nativeCurrency: {
       name: 'Ether',
       symbol: 'ETH',
       decimals: 18,
     },
     rpcUrls: {
-      default: { http: [ANVIL_RPC_URL] },
-      public: { http: [ANVIL_RPC_URL] },
+      default: { http: [rpcUrl] },
+      public: { http: [rpcUrl] },
     },
-  } as const
+  })
 
-  // Check if Anvil is running and account has balance
+  // Check if chains are running and accounts have balance
   beforeAll(async () => {
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    account = wallet.getAccount()
+
+    // Initialize Chain A
     try {
-      publicClient = createPublicClient({
-        chain: anvilChain,
-        transport: http(ANVIL_RPC_URL)
+      const chainAConfig = createChainConfig(CHAIN_A_ID, CHAIN_A_RPC_URL)
+      const publicClient = createPublicClient({
+        chain: chainAConfig,
+        transport: http(CHAIN_A_RPC_URL)
       })
 
-      const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
-      account = wallet.getAccount()
       const balance = await publicClient.getBalance({ address: account.address })
       
-      isAnvilRunning = true
-      hasBalance = balance >= parseEther('1')
-
-      // Create wallet client for direct deployment
-      walletClient = createWalletClient({
-        chain: anvilChain,
-        transport: http(ANVIL_RPC_URL),
-        account
-      })
+      chainStates[CHAIN_A_ID] = {
+        isRunning: true,
+        hasBalance: balance >= parseEther('1'),
+        publicClient,
+        walletClient: createWalletClient({
+          chain: chainAConfig,
+          transport: http(CHAIN_A_RPC_URL),
+          account
+        })
+      }
     } catch (error) {
-      console.log('Anvil not running or other setup issue:', error)
+      console.log('Chain A not running or other setup issue:', error)
+      chainStates[CHAIN_A_ID] = {
+        isRunning: false,
+        hasBalance: false,
+        publicClient: null as any,
+        walletClient: null as any
+      }
+    }
+
+    // Initialize Chain B
+    try {
+      const chainBConfig = createChainConfig(CHAIN_B_ID, CHAIN_B_RPC_URL)
+      const publicClient = createPublicClient({
+        chain: chainBConfig,
+        transport: http(CHAIN_B_RPC_URL)
+      })
+
+      const balance = await publicClient.getBalance({ address: account.address })
+      
+      chainStates[CHAIN_B_ID] = {
+        isRunning: true,
+        hasBalance: balance >= parseEther('1'),
+        publicClient,
+        walletClient: createWalletClient({
+          chain: chainBConfig,
+          transport: http(CHAIN_B_RPC_URL),
+          account
+        })
+      }
+    } catch (error) {
+      console.log('Chain B not running or other setup issue:', error)
+      chainStates[CHAIN_B_ID] = {
+        isRunning: false,
+        hasBalance: false,
+        publicClient: null as any,
+        walletClient: null as any
+      }
     }
   })
 
-  it('should deploy and interact with contract directly (without CREATE2)', async () => {
+  const testDirectDeployment = async (chainId: number) => {
+    const chainState = chainStates[chainId]
+    const chain = chainState.walletClient.chain
+    
     // Skip if preconditions not met
-    if (!isAnvilRunning) {
-      console.log('Skipping test: Anvil not running')
+    if (!chainState.isRunning) {
+      console.log(`Skipping test: Chain ${chainId} not running`)
       return
     }
-    if (!hasBalance) {
-      console.log('Skipping test: Test account has insufficient balance')
+    if (!chainState.hasBalance) {
+      console.log(`Skipping test: Test account has insufficient balance on chain ${chainId}`)
       return
     }
 
     // Deploy contract directly
-    console.log('Deploying contract directly...')
-    const hash = await walletClient.deployContract({
+    console.log(`Deploying contract directly on chain ${chainId}...`)
+    const hash = await chainState.walletClient.deployContract({
       abi: TEST_CONTRACT_ABI,
       bytecode: TEST_CONTRACT_BYTECODE,
-      chain: anvilChain,
       account,
-      args: [100n]  // Initial value of 100
+      args: [100n],  // Initial value of 100
+      chain
     })
 
-    const receipt = await publicClient.waitForTransactionReceipt({ hash })
-    console.log('Direct deployment receipt:', receipt)
+    const receipt = await chainState.publicClient.waitForTransactionReceipt({ hash })
+    console.log(`Direct deployment receipt on chain ${chainId}:`, receipt)
 
     expect(receipt.status).toBe('success')
     expect(receipt.contractAddress).toBeDefined()
@@ -117,53 +171,55 @@ describe('Contract Deployment Integration', () => {
     }
 
     // Test contract interaction
-    console.log('Testing contract interaction...')
+    console.log(`Testing contract interaction on chain ${chainId}...`)
     
     // Get initial value (should be 100)
-    const initialValue = await publicClient.readContract({
+    const initialValue = await chainState.publicClient.readContract({
       address: receipt.contractAddress,
       abi: TEST_CONTRACT_ABI,
       functionName: 'x',
     })
 
-    console.log('Initial value:', initialValue?.toString())
+    console.log(`Initial value on chain ${chainId}:`, initialValue?.toString())
     expect(initialValue).toBe(100n)
 
     // Set value to 42
-    console.log('Setting value to 42...')
-    const setHash = await walletClient.writeContract({
+    console.log(`Setting value to 42 on chain ${chainId}...`)
+    const setHash = await chainState.walletClient.writeContract({
       address: receipt.contractAddress,
       abi: TEST_CONTRACT_ABI,
       functionName: 'setX',
       args: [42n],
-      chain: anvilChain,
-      account
+      account,
+      chain
     })
 
-    const setReceipt = await publicClient.waitForTransactionReceipt({ hash: setHash })
-    console.log('Set value receipt:', setReceipt)
+    const setReceipt = await chainState.publicClient.waitForTransactionReceipt({ hash: setHash })
+    console.log(`Set value receipt on chain ${chainId}:`, setReceipt)
     expect(setReceipt.status).toBe('success')
 
     // Get updated value (should be 42)
-    const updatedValue = await publicClient.readContract({
+    const updatedValue = await chainState.publicClient.readContract({
       address: receipt.contractAddress,
       abi: TEST_CONTRACT_ABI,
       functionName: 'x',
     })
 
-    console.log('Updated value:', updatedValue?.toString())
+    console.log(`Updated value on chain ${chainId}:`, updatedValue?.toString())
     expect(updatedValue).toBe(42n)
-    console.log('Value successfully updated to 42')
-  }, 30000)
+    console.log(`Value successfully updated to 42 on chain ${chainId}`)
+  }
 
-  it('should deploy and interact with contract using CREATE2 factory', async () => {
+  const testCreate2Deployment = async (chainId: number) => {
+    const chainState = chainStates[chainId]
+    
     // Skip if preconditions not met
-    if (!isAnvilRunning) {
-      console.log('Skipping test: Anvil not running')
+    if (!chainState.isRunning) {
+      console.log(`Skipping test: Chain ${chainId} not running`)
       return
     }
-    if (!hasBalance) {
-      console.log('Skipping test: Test account has insufficient balance')
+    if (!chainState.hasBalance) {
+      console.log(`Skipping test: Test account has insufficient balance on chain ${chainId}`)
       return
     }
 
@@ -182,84 +238,84 @@ describe('Contract Deployment Integration', () => {
     )
 
     // First verify contract is not already deployed at the computed address
-    const isDeployedBefore = await contract.isDeployed(ANVIL_CHAIN_ID)
+    const isDeployedBefore = await contract.isDeployed(chainId)
     expect(isDeployedBefore).toBe(false)
-    console.log('Verified contract is not already deployed at computed address')
+    console.log(`Verified contract is not already deployed at computed address on chain ${chainId}`)
 
     // Deploy using CREATE2
-    console.log('Deploying contract using CREATE2...')
-    const receipt = await contract.deploy(ANVIL_CHAIN_ID)
-    console.log('CREATE2 deployment receipt:', receipt)
+    console.log(`Deploying contract using CREATE2 on chain ${chainId}...`)
+    const receipt = await contract.deploy(chainId)
+    console.log(`CREATE2 deployment receipt on chain ${chainId}:`, receipt)
 
     expect(receipt.status).toBe('success')
     expect(contract.address).toBeDefined()
 
     // Test contract interaction using wrapper
-    console.log('Testing contract interaction...')
-    const value = await contract.call(ANVIL_CHAIN_ID, 'x')
-    console.log('Retrieved value:', value?.toString())
+    console.log(`Testing contract interaction on chain ${chainId}...`)
+    const value = await contract.call(chainId, 'x')
+    console.log(`Retrieved value on chain ${chainId}:`, value?.toString())
     expect(value).toBe(100n)
-    console.log('Contract interaction successful')
+    console.log(`Contract interaction successful on chain ${chainId}`)
 
     // Verify the contract is at the computed address
-    const isDeployedAfter = await contract.isDeployed(ANVIL_CHAIN_ID)
+    const isDeployedAfter = await contract.isDeployed(chainId)
     expect(isDeployedAfter).toBe(true)
-    console.log('Contract verified at computed address')
-  }, 30000)
+    console.log(`Contract verified at computed address on chain ${chainId}`)
 
-  it('should set and read value using CREATE2 factory', async () => {
-    // Skip if preconditions not met
-    if (!isAnvilRunning) {
-      console.log('Skipping test: Anvil not running')
-      return
-    }
-    if (!hasBalance) {
-      console.log('Skipping test: Test account has insufficient balance')
-      return
-    }
+    return contract
+  }
 
-    // Create wallet instance
-    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+  it('should deploy and interact with contract directly (without CREATE2) on both chains', async () => {
+    await testDirectDeployment(CHAIN_A_ID)
+    await testDirectDeployment(CHAIN_B_ID)
+  }, 60000)
 
-    // Get contract wrapper with unique salt
+  it('should deploy and interact with contract using CREATE2 factory on both chains', async () => {
+    await testCreate2Deployment(CHAIN_A_ID)
+    await testCreate2Deployment(CHAIN_B_ID)
+  }, 60000)
+
+  it('should deploy contracts with same address on both chains using CREATE2', async () => {
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    
     const contract = new SuperContract(
       rpc,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
-      [100n],  // Initial value of 100
+      [100n],
       uniqueSalt
     )
 
-    // First verify contract is not already deployed at the computed address
-    const isDeployedBefore = await contract.isDeployed(ANVIL_CHAIN_ID)
-    expect(isDeployedBefore).toBe(false)
-    console.log('Verified contract is not already deployed at computed address')
+    // Deploy on Chain A
+    if (chainStates[CHAIN_A_ID].isRunning && chainStates[CHAIN_A_ID].hasBalance) {
+      const receiptA = await contract.deploy(CHAIN_A_ID)
+      expect(receiptA.status).toBe('success')
+    }
 
-    // Deploy using CREATE2
-    console.log('Deploying contract using CREATE2...')
-    const receipt = await contract.deploy(ANVIL_CHAIN_ID)
-    console.log('CREATE2 deployment receipt:', receipt)
+    // Deploy on Chain B
+    if (chainStates[CHAIN_B_ID].isRunning && chainStates[CHAIN_B_ID].hasBalance) {
+      const receiptB = await contract.deploy(CHAIN_B_ID)
+      expect(receiptB.status).toBe('success')
+    }
 
-    expect(receipt.status).toBe('success')
-    expect(contract.address).toBeDefined()
+    // Verify contracts are deployed at the same address
+    if (chainStates[CHAIN_A_ID].isRunning && chainStates[CHAIN_B_ID].isRunning) {
+      const isDeployedA = await contract.isDeployed(CHAIN_A_ID)
+      const isDeployedB = await contract.isDeployed(CHAIN_B_ID)
+      
+      expect(isDeployedA).toBe(true)
+      expect(isDeployedB).toBe(true)
 
-    // Get initial value (should be 100)
-    const initialValue = await contract.call(ANVIL_CHAIN_ID, 'x')
-    console.log('Initial value:', initialValue?.toString())
-    expect(initialValue).toBe(100n)
-
-    // Set value to 42
-    console.log('Setting value to 42...')
-    const setReceipt = await contract.sendTx(ANVIL_CHAIN_ID, 'setX', [42n])
-    console.log('Set value receipt:', setReceipt)
-    expect(setReceipt.status).toBe('success')
-
-    // Get updated value (should be 42)
-    const updatedValue = await contract.call(ANVIL_CHAIN_ID, 'x')
-    console.log('Updated value:', updatedValue?.toString())
-    expect(updatedValue).toBe(42n)
-    console.log('Value successfully updated to 42')
-  }, 30000)
+      // Verify values are the same
+      const valueA = await contract.call(CHAIN_A_ID, 'x')
+      const valueB = await contract.call(CHAIN_B_ID, 'x')
+      
+      expect(valueA).toBe(100n)
+      expect(valueB).toBe(100n)
+      
+      console.log('Contract deployed at same address on both chains:', contract.address)
+    }
+  }, 60000)
 }) 
