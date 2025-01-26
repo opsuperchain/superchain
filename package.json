@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR_USERNAME/superchain-starter.git"
+    "url": "git+https://github.com/opsuperchain/superchain-starter.git"
   },
   "dependencies": {
     "viem": "^2.0.0"
