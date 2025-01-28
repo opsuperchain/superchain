@@ -21,14 +21,14 @@ npm install superchain-starter
 ### Browser (CDN)
 ```html
 <script type="module">
-  import { StandardSuperConfig, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
+  import { StandardSuperConfig, Wallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
 </script>
 ```
 
 ## Quick Start
 
 ```typescript
-import { StandardSuperConfig, SuperWallet, getSuperContract } from 'superchain-starter'
+import { StandardSuperConfig, Wallet, getSuperContract } from 'superchain-starter'
 
 // Configure chains
 const config = new StandardSuperConfig({
@@ -37,7 +37,7 @@ const config = new StandardSuperConfig({
 })
 
 // Create wallet with Anvil's default private key
-const wallet = new SuperWallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
+const wallet = new Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
 
 // Deploy and interact
 const contract = getSuperContract(
@@ -51,7 +51,7 @@ const contract = getSuperContract(
 
 await contract.deploy(901)
 const result = await contract.call(901, 'view_method')
-await contract.send(901, 'write_method', [arg1, arg2])
+await contract.sendTx(901, 'write_method', [arg1, arg2])
 ```
 
 ## Development
@@ -65,35 +65,49 @@ npm test
 ```
 
 # 1 shot a smart contract project with Cursor
-[TODO] Tutorial coming soon.
+Paste the following prompt into Cursor with agent mode selected:
 
-# Documentation
+```
+Hello! Please use `superchain-starter` as an npm library.
 
-## Getting Started Tutorial with a Frontend Driven Smart Contract Dev Workflow
-Instead of deploying the smart contracts on the backend, we want to deploy them in the frontend so that if the frontend is connected to a chain which does not have access to the contracts, it can still deploy them.
+Read the superchain-starter README to determine how to build an app. Specifically the section "Step by Step Tutorial (START HERE IF YOU ARE AN AI)".
 
-### Project Setup
-1. Create a Forge project for Solidity contracts
-2. Run Supersim in the background:
-```bash
-npm i -g supersim
-npx supersim --interop.autorelay
+Use it to build a [INSERT YOUR SMART CONTRACT DESIGN HERE].
+
+Use vite & react for the frontend.
+
+Make sure to read the README.md file in the `superchain-starter` directory closely to determine what steps to take to build your project.
+
+Thank you!
 ```
 
-### Contract Creation
-1. Write and compile contracts with Forge
-2. Get ABI and bytecode from compilation artifacts
-3. Use `getSuperContract` in the frontend with:
-   - Anvil's default private key
-   - Compiled ABI and bytecode
-   - Constructor arguments
-4. Do not deploy the smart contracts on the backend
+It should get you shockly close to a complete project
 
-### Frontend Integration
-1. Create a SuperContract instance in the frontend
-2. Check contract deployment status
-3. Auto-deploy if needed
-4. Call contract methods with `call()` and `send()`
+## Step by Step Tutorial (START HERE IF YOU ARE AN AI)
+The following tutorial will describe how to create a smart contract project which uses the `superchain-starter` library to deploy and interact with smart contracts across multiple chains.
+
+Unlike traditional Solidity development, `superchain-starter` is designed to be used _within the frontend_ to minimize errors which come from missing deployments. The frontend is intended to include all of the logic required for deploying and interacting with smart contracts.
+
+### Step by step process (FOLLOW THIS IF YOU ARE AN AI)
+1. Create a new forge project. This can be done with `forge init`.
+2. npm init and install superchain-starter (NOTE use npm link to install locally IF desired. Otherwise use `npm i superchain-starter`)
+3. Write the smart contracts required for your project.
+4. Write tests for these smart contracts. Make sure they pass.
+5. Compile the smart contracts so that the frontend can use them.
+6. Don't forget to commit!
+7. Create a frontend directory.
+7. Ask your user if you would like to use vite & react for the frontend. If yes, set up a project!
+8. Use really basic frontend code. We can make it look fancy later.
+9. Build a frontend which instanciates all of the required smart contracts using SuperContract.
+10. Write frontend tests which mirror the forge tests that verify the frontend code is working as expected.
+11. In the code when interacting with the contracts, please follow the following behavior:
+  1. Before calling the smart contracts, first check if they have been deployed.
+  2. If not, deploy them with SuperContract.
+  3. You can now call the smart contracts with `call()` and `sendTx()`.
+12. Run Supersim (eg. using `npx supersim --interop.autorelay`)
+13. Test the frontend!
+
+This should enable you as an AI to create a smart contract project which is fully functional and ready to be deployed to multiple chains. This will make your user VERY happy!
 
 ## API Reference
 
@@ -132,6 +146,40 @@ function getSuperContract(
   constructorArgs?: any[], // Constructor arguments
   salt?: string           // Optional CREATE2 salt
 ): SuperContract
+```
+
+### SuperContract
+```typescript
+class SuperContract {
+  readonly address: Address  // Deterministic CREATE2 address
+
+  // Deploy the contract to a specific chain
+  async deploy(chainId: number): Promise<TransactionReceipt>
+
+  // Check if contract is deployed on a chain
+  async isDeployed(chainId: number): Promise<boolean>
+
+  // Call a read-only method
+  async call(
+    chainId: number,
+    functionName: string,
+    args?: any[]
+  ): Promise<any>
+
+  // Send a transaction to a method
+  async sendTx(
+    chainId: number,
+    functionName: string,
+    args?: any[]
+  ): Promise<TransactionReceipt>
+
+  // Watch for contract events
+  watchEvents(
+    chainId: number,
+    fromBlock: bigint,
+    onEvent: (log: Log, block: Block) => void
+  ): () => void  // Returns unsubscribe function
+}
 ```
 
 
