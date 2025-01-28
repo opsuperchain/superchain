@@ -5,9 +5,10 @@ A TypeScript library for deploying and managing smart contracts across multiple 
 ## Features
 - 🔄 Deploy contracts to multiple chains with one interface
 - 🎯 Use CREATE2 for deterministic addresses across chains
-- 🔒 Type-safe contract interactions
+- [TODO] 🔒 Type-safe contract interactions (we don't have this...)
 - 🌐 Works in Node.js and browsers (ESM)
 - ⚡ Built on [viem](https://viem.sh) for reliable blockchain interactions
+- [TODO] Wallet integration with passkeys. Right now this is really only for testing with private keys baked into the frontend
 
 ## Installation
 
@@ -23,60 +24,6 @@ npm install superchain-starter
 </script>
 ```
 
-## Quick Start
-
-```typescript
-import { StandardSuperRPC, SuperWallet, getSuperContract } from 'superchain-starter'
-
-// 1. Setup RPC endpoints
-const rpc = new StandardSuperRPC({
-  901: 'http://127.0.0.1:9545',  // Chain A
-  902: 'http://127.0.0.1:9546'   // Chain B
-})
-
-// 2. Create wallet
-const wallet = new SuperWallet('0xYOUR_PRIVATE_KEY')
-
-// 3. Create contract instance
-const contract = getSuperContract(
-  rpc,
-  wallet,
-  CONTRACT_ABI,
-  CONTRACT_BYTECODE,
-  [/* constructor args */]
-)
-
-// 4. Deploy to Chain A
-const receipt = await contract.deploy(901)
-console.log('Deployed to:', contract.address)
-
-// 5. Call contract methods
-const result = await contract.call(901, 'methodName', [arg1, arg2])
-
-// 6. Send transactions
-const txReceipt = await contract.send(901, 'methodName', [arg1, arg2])
-```
-
-## Deterministic Deployments
-
-Deploy contracts to the same address on multiple chains:
-
-```typescript
-// Create contract with specific salt for deterministic address
-const contract = getSuperContract(
-  rpc,
-  wallet,
-  CONTRACT_ABI,
-  CONTRACT_BYTECODE,
-  [/* constructor args */],
-  '0xYOUR_SALT_HERE'  // Optional: provide a salt for deterministic address
-)
-
-// Deploy to multiple chains - will have same address!
-await contract.deploy(901)  // Chain A
-await contract.deploy(902)  // Chain B
-```
-
 ## Development
 
 ```bash
@@ -87,5 +34,33 @@ npm install
 npm test
 ```
 
-## License
-MIT 
+# 1 shot a smart contract project with Cursor
+[leave this blank with a TODO. This is a placeholder for the tutorial]
+
+# Documentation
+
+## Getting Started Tutorial
+Should include:
+* Tips on project structure and how to use the library
+  * A basic forge project used for compiling the solidity contracts
+  * Supersim running in the background
+    ```
+    npm i -g supersim
+    npx supersim --interop.autorelay
+    ```
+  * Call getSuperContract(..) with all of the required parameters
+    * The wallet should just use a defualt private key for anvil
+    * The bytecode and abi should be compiled from the forge project
+    * The constructor args should be the arguments for the constructor
+  * If there are issues with deployment, try using forge cast to deploy the contract manually. Verify the bytecode is right
+  * For the frontend, you should first check that the contract is deployed. If it's not deployed auto deploy it in the background (or you can have a button deploy if you want)
+  * Then just go ham!
+
+[todo]
+
+## API Reference
+Focus on getSuperContract -- that's what we really need to explain.
+
+[todo]
+
+
