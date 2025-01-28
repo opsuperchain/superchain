@@ -5,20 +5,30 @@ export class ChainIdNotFoundError extends Error {
   }
 }
 
-export interface SuperRPC {
+export interface SuperConfig {
+  /**
+   * Get all configured chain IDs
+   * @returns Array of chain IDs
+   */
+  getChainIds(): number[]
+
   /**
    * Get the RPC URL for a given chain ID
    * @param chainId The chain ID to get the RPC URL for
    * @throws {ChainIdNotFoundError} If no RPC URL is configured for the given chain ID
    * @returns The RPC URL for the chain
    */
-  getUrl(chainId: number): string
+  getRpcUrl(chainId: number): string
 }
 
-export class StandardSuperRPC implements SuperRPC {
+export class StandardSuperConfig implements SuperConfig {
   constructor(private rpcMap: Record<number, string>) {}
 
-  getUrl(chainId: number): string {
+  getChainIds(): number[] {
+    return Object.keys(this.rpcMap).map(Number)
+  }
+
+  getRpcUrl(chainId: number): string {
     const url = this.rpcMap[chainId]
     if (!url) {
       throw new ChainIdNotFoundError(chainId)

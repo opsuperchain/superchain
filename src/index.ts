@@ -3,20 +3,20 @@
  */
 
 // Export all Super components
-export { Wallet as SuperWallet } from './SuperWallet'
+export { Wallet as SuperWallet } from './Wallet'
 export { SuperContract } from './SuperContract'
-export { SuperRPC, StandardSuperRPC, ChainIdNotFoundError } from './SuperRPC'
+export { SuperConfig, StandardSuperConfig, ChainIdNotFoundError } from './SuperConfig'
 export { CREATE2_FACTORY_ADDRESS } from './constants'
 
 // Import types we need
-import { Wallet } from './SuperWallet'
+import { Wallet } from './Wallet'
 import { SuperContract } from './SuperContract'
-import { SuperRPC } from './SuperRPC'
+import { SuperConfig } from './SuperConfig'
 import type { Address } from 'viem'
 
 /**
  * Helper function to create a SuperContract instance with all required dependencies
- * @param rpc - SuperRPC instance for managing RPC URLs
+ * @param config - SuperConfig instance for managing chain IDs and RPC URLs
  * @param wallet - Either a SuperWallet instance or a private key (as hex string with 0x prefix)
  * @param abi - Contract ABI
  * @param bytecode - Contract bytecode (with 0x prefix)
@@ -25,7 +25,7 @@ import type { Address } from 'viem'
  * @returns SuperContract instance ready for deployment/interaction
  */
 export function getSuperContract(
-  rpc: SuperRPC,
+  config: SuperConfig,
   wallet: Wallet | `0x${string}`,
   abi: any[],
   bytecode: `0x${string}`,
@@ -34,7 +34,7 @@ export function getSuperContract(
 ): SuperContract {
   const superWallet = wallet instanceof Wallet ? wallet : new Wallet(wallet)
   return new SuperContract(
-    rpc,
+    config,
     superWallet,
     abi,
     bytecode,
@@ -48,10 +48,10 @@ Browser Usage Example:
 
 <script type="module">
   // Import from CDN (replace VERSION with actual version)
-  import { StandardSuperRPC, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter@VERSION/dist/index.js'
+  import { StandardSuperConfig, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter@VERSION/dist/index.js'
 
   // Example contract setup
-  const rpc = new StandardSuperRPC({
+  const config = new StandardSuperConfig({
     901: 'http://127.0.0.1:9545',  // Chain A
     902: 'http://127.0.0.1:9546'   // Chain B
   })
@@ -62,7 +62,7 @@ Browser Usage Example:
 
   // Option 1: Create contract with private key directly
   const contract1 = getSuperContract(
-    rpc,
+    config,
     '0xYOUR_PRIVATE_KEY',  // Be careful with private keys!
     CONTRACT_ABI,
     CONTRACT_BYTECODE,
@@ -73,7 +73,7 @@ Browser Usage Example:
   // Option 2: Create contract with SuperWallet instance
   const wallet = new SuperWallet('0xYOUR_PRIVATE_KEY')
   const contract2 = getSuperContract(
-    rpc,
+    config,
     wallet,
     CONTRACT_ABI,
     CONTRACT_BYTECODE,

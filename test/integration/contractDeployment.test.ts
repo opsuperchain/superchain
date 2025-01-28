@@ -1,6 +1,6 @@
-import { Wallet } from '../../src/SuperWallet'
+import { Wallet } from '../../src/Wallet'
 import { SuperContract } from '../../src/SuperContract'
-import { StandardSuperRPC } from '../../src/SuperRPC'
+import { StandardSuperConfig } from '../../src/SuperConfig'
 import { createPublicClient, createWalletClient, http, parseEther, Account, Chain } from 'viem'
 
 // Test contract ABI and bytecode
@@ -40,7 +40,7 @@ describe('Contract Deployment Integration', () => {
   const CHAIN_B_ID = 902
   const CHAIN_B_RPC_URL = 'http://127.0.0.1:9546'
   
-  const rpc = new StandardSuperRPC({
+  const config = new StandardSuperConfig({
     [CHAIN_A_ID]: CHAIN_A_RPC_URL,
     [CHAIN_B_ID]: CHAIN_B_RPC_URL
   })
@@ -228,7 +228,7 @@ describe('Contract Deployment Integration', () => {
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const contract = new SuperContract(
-      rpc,
+      config,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
@@ -279,7 +279,7 @@ describe('Contract Deployment Integration', () => {
     const wallet = new Wallet(ANVIL_PRIVATE_KEY)
     
     const contract = new SuperContract(
-      rpc,
+      config,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
