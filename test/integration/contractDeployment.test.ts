@@ -1,6 +1,7 @@
 import { Wallet } from '../../src/Wallet'
 import { SuperContract } from '../../src/SuperContract'
 import { StandardSuperConfig } from '../../src/SuperConfig'
+import { getSuperContract } from '../../src/index'
 import { createPublicClient, createWalletClient, http, parseEther, Account, Chain } from 'viem'
 
 // Test contract ABI and bytecode
@@ -28,6 +29,15 @@ const TEST_CONTRACT_ABI = [
 
 // This is the compiled bytecode from our TestContract.sol
 const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b5060405161010f38038061010f83398101604081905261002f91610037565b600055610050565b60006020828403121561004957600080fd5b5051919050565b60b18061005e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630c55699c1460375780634018d9aa146051575b600080fd5b603f60005481565b60405190815260200160405180910390f35b6061605c3660046063565b600055565b005b600060208284031215607457600080fd5b503591905056fea264697066735822122034362d374f123dbd53fa899d12d79e6a4339cc81cc43fca80b3c2faae49f0e5864736f6c63430008130033' as `0x${string}`
+
+// CrossDomainMessenger ABI (just the version function)
+const MESSENGER_ABI: any[] = [{
+  type: 'function',
+  name: 'version',
+  inputs: [],
+  outputs: [{ type: 'string' }],
+  stateMutability: 'view'
+}]
 
 describe('Contract Deployment Integration', () => {
   const ANVIL_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
@@ -315,6 +325,32 @@ describe('Contract Deployment Integration', () => {
       expect(valueB).toBe(100n)
       
       console.log('Contract deployed at same address on both chains:', contract.address)
+    }
+  }, 60000)
+
+  it('should interact with predeployed CrossDomainMessenger', async () => {
+    const wallet = new Wallet(ANVIL_PRIVATE_KEY)
+    
+    const messenger = getSuperContract(
+      config,
+      wallet,
+      MESSENGER_ABI,
+      '0x', // Empty bytecode for existing contracts
+      [], // No constructor args needed
+      undefined, // No salt needed
+      '0x4200000000000000000000000000000000000023' as `0x${string}` // Predeployed address
+    )
+
+    // Try on both chains
+    for (const chainId of [CHAIN_A_ID, CHAIN_B_ID]) {
+      if (!chainStates[chainId].isRunning) {
+        console.log(`Skipping chain ${chainId}: not running`)
+        continue
+      }
+
+      const version = await messenger.call(chainId, 'version')
+      console.log(`CrossDomainMessenger version on chain ${chainId}:`, version)
+      expect(version).toBeTruthy() // Version should be non-empty string
     }
   }, 60000)
 }) 

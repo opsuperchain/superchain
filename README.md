@@ -144,8 +144,30 @@ function getSuperContract(
   abi: any[],              // Contract ABI
   bytecode: string,        // Contract bytecode
   constructorArgs?: any[], // Constructor arguments
-  salt?: string           // Optional CREATE2 salt
+  salt?: string,          // Optional CREATE2 salt
+  address?: Address       // Optional address to interact with existing contract
 ): SuperContract
+
+// Example: Create new contract with deterministic address
+const contract = getSuperContract(
+  config,
+  wallet,
+  CONTRACT_ABI,
+  CONTRACT_BYTECODE,
+  [constructor_args],
+  '0xoptional_salt'
+)
+
+// Example: Interact with existing contract
+const existingContract = getSuperContract(
+  config,
+  wallet,
+  CONTRACT_ABI,
+  '0x', // Empty bytecode for existing contracts
+  [], // No constructor args needed
+  undefined, // No salt needed
+  '0xYourContractAddress'
+)
 ```
 
 ### SuperContract

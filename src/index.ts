@@ -22,6 +22,7 @@ import type { Address } from 'viem'
  * @param bytecode - Contract bytecode (with 0x prefix)
  * @param constructorArgs - Arguments for the contract constructor
  * @param salt - Optional salt for CREATE2 deployment (defaults to current timestamp)
+ * @param address - Optional address to interact with existing contract. Especially useful for predeployed system contracts (e.g. CrossDomainMessenger at 0x4200...0023)
  * @returns SuperContract instance ready for deployment/interaction
  */
 export function getSuperContract(
@@ -30,7 +31,8 @@ export function getSuperContract(
   abi: any[],
   bytecode: `0x${string}`,
   constructorArgs: any[] = [],
-  salt?: `0x${string}`
+  salt?: `0x${string}`,
+  address?: Address
 ): SuperContract {
   const superWallet = wallet instanceof Wallet ? wallet : new Wallet(wallet)
   return new SuperContract(
@@ -39,7 +41,8 @@ export function getSuperContract(
     abi,
     bytecode,
     constructorArgs,
-    salt
+    salt,
+    address
   )
 }
 
@@ -67,7 +70,8 @@ Browser Usage Example:
     CONTRACT_ABI,
     CONTRACT_BYTECODE,
     [constructor, args, here],  // Optional constructor arguments
-    '0xoptional_salt_here'      // Optional salt for CREATE2
+    '0xoptional_salt_here',      // Optional salt for CREATE2
+    '0xexisting_contract_address'  // Optional existing contract address
   )
 
   // Option 2: Create contract with SuperWallet instance
@@ -77,7 +81,9 @@ Browser Usage Example:
     wallet,
     CONTRACT_ABI,
     CONTRACT_BYTECODE,
-    [constructor, args, here]
+    [constructor, args, here],
+    '0xoptional_salt_here',
+    '0xexisting_contract_address'
   )
 
   // Deploy to Chain A

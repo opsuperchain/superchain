@@ -15,15 +15,20 @@ export class SuperContract {
     private abi: Abi,
     private bytecode: `0x${string}`,
     private constructorArgs: any[] = [],
-    private salt: `0x${string}` = defaultSalt
+    private salt: `0x${string}` = defaultSalt,
+    address?: Address
   ) {
-    // Compute the deterministic address
-    const deployData = encodeDeployData({
-      abi,
-      bytecode,
-      args: constructorArgs
-    })
-    this.address = this.computeAddress(deployData)
+    // Use provided address or compute deterministic address
+    if (address) {
+      this.address = address
+    } else {
+      const deployData = encodeDeployData({
+        abi,
+        bytecode,
+        args: constructorArgs
+      })
+      this.address = this.computeAddress(deployData)
+    }
   }
 
   private getClients(chainId: number) {
