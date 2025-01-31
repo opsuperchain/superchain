@@ -5,27 +5,25 @@ import { getSuperContract } from '../../src/index'
 import { createPublicClient, createWalletClient, http, parseEther, Account, Chain } from 'viem'
 
 // Test contract ABI and bytecode
-const TEST_CONTRACT_ABI = [
-  {
-    type: 'constructor' as const,
-    inputs: [{ type: 'uint256', name: '_initialValue' }],
-    stateMutability: 'nonpayable' as const
-  },
-  {
-    type: 'function' as const,
-    name: 'x',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'view' as const
-  },
-  {
-    type: 'function' as const,
-    name: 'setX',
-    inputs: [{ type: 'uint256', name: '_x' }],
-    outputs: [],
-    stateMutability: 'nonpayable' as const
-  }
-] as const;
+const TEST_CONTRACT_ABI = [{
+  type: 'constructor',
+  inputs: [{ type: 'uint256', name: '_initialValue' }],
+  stateMutability: 'nonpayable'
+},
+{
+  type: 'function',
+  name: 'x',
+  inputs: [],
+  outputs: [{ type: 'uint256' }],
+  stateMutability: 'view'
+},
+{
+  type: 'function',
+  name: 'setX',
+  inputs: [{ type: 'uint256', name: '_x' }],
+  outputs: [],
+  stateMutability: 'nonpayable'
+}]
 
 // This is the compiled bytecode from our TestContract.sol
 const TEST_CONTRACT_BYTECODE = '0x608060405234801561001057600080fd5b5060405161010f38038061010f83398101604081905261002f91610037565b600055610050565b60006020828403121561004957600080fd5b5051919050565b60b18061005e6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80630c55699c1460375780634018d9aa146051575b600080fd5b603f60005481565b60405190815260200160405180910390f35b6061605c3660046063565b600055565b005b600060208284031215607457600080fd5b503591905056fea264697066735822122034362d374f123dbd53fa899d12d79e6a4339cc81cc43fca80b3c2faae49f0e5864736f6c63430008130033' as `0x${string}`
@@ -237,13 +235,13 @@ describe('Contract Deployment Integration', () => {
 
     // Get contract wrapper with unique salt
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
-    const contract = new SuperContract(
+    const contract = getSuperContract(
       config,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
       [100n],  // Initial value of 100
-      uniqueSalt
+      { salt: uniqueSalt }
     )
 
     // First verify contract is not already deployed at the computed address
@@ -288,13 +286,13 @@ describe('Contract Deployment Integration', () => {
     const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
     const wallet = new Wallet(ANVIL_PRIVATE_KEY)
     
-    const contract = new SuperContract(
+    const contract = getSuperContract(
       config,
       wallet,
       TEST_CONTRACT_ABI,
       TEST_CONTRACT_BYTECODE,
       [100n],
-      uniqueSalt
+      { salt: uniqueSalt }
     )
 
     // Deploy on Chain A
@@ -337,8 +335,7 @@ describe('Contract Deployment Integration', () => {
       MESSENGER_ABI,
       '0x', // Empty bytecode for existing contracts
       [], // No constructor args needed
-      undefined, // No salt needed
-      '0x4200000000000000000000000000000000000023' as `0x${string}` // Predeployed address
+      { address: '0x4200000000000000000000000000000000000023' as `0x${string}` }
     )
 
     // Try on both chains

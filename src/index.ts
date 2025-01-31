@@ -10,7 +10,7 @@ export { CREATE2_FACTORY_ADDRESS } from './constants'
 
 // Import types we need
 import { Wallet } from './Wallet'
-import { SuperContract } from './SuperContract'
+import { SuperContract, SuperContractOptions } from './SuperContract'
 import { SuperConfig } from './SuperConfig'
 import type { Address } from 'viem'
 
@@ -21,8 +21,9 @@ import type { Address } from 'viem'
  * @param abi - Contract ABI
  * @param bytecode - Contract bytecode (with 0x prefix)
  * @param constructorArgs - Arguments for the contract constructor
- * @param salt - Optional salt for CREATE2 deployment (defaults to current timestamp)
- * @param address - Optional address to interact with existing contract. Especially useful for predeployed system contracts (e.g. CrossDomainMessenger at 0x4200...0023)
+ * @param options - Optional configuration:
+ *   - salt: Optional salt for CREATE2 deployment
+ *   - address: Optional address to interact with existing contract (e.g. predeployed contracts)
  * @returns SuperContract instance ready for deployment/interaction
  */
 export function getSuperContract(
@@ -31,8 +32,7 @@ export function getSuperContract(
   abi: any[],
   bytecode: `0x${string}`,
   constructorArgs: any[] = [],
-  salt?: `0x${string}`,
-  address?: Address
+  options?: Partial<SuperContractOptions>
 ): SuperContract {
   const superWallet = wallet instanceof Wallet ? wallet : new Wallet(wallet)
   return new SuperContract(
@@ -41,8 +41,7 @@ export function getSuperContract(
     abi,
     bytecode,
     constructorArgs,
-    salt,
-    address
+    options
   )
 }
 
@@ -70,20 +69,18 @@ Browser Usage Example:
     CONTRACT_ABI,
     CONTRACT_BYTECODE,
     [constructor, args, here],  // Optional constructor arguments
-    '0xoptional_salt_here',      // Optional salt for CREATE2
-    '0xexisting_contract_address'  // Optional existing contract address
+    { salt: '0xoptional_salt_here' }  // Optional configuration
   )
 
-  // Option 2: Create contract with SuperWallet instance
+  // Option 2: Create contract with SuperWallet instance and existing address
   const wallet = new SuperWallet('0xYOUR_PRIVATE_KEY')
   const contract2 = getSuperContract(
     config,
     wallet,
     CONTRACT_ABI,
-    CONTRACT_BYTECODE,
-    [constructor, args, here],
-    '0xoptional_salt_here',
-    '0xexisting_contract_address'
+    '0x', // Empty bytecode for existing contracts
+    [], // No constructor args needed
+    { address: '0xexisting_contract_address' }  // Use existing contract address
   )
 
   // Deploy to Chain A

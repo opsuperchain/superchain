@@ -6,6 +6,13 @@ import { SuperConfig } from './SuperConfig'
 // Default salt value
 const defaultSalt = '0x' + keccak256(toHex('my_salt')).slice(2, 34).padStart(64, '0') as `0x${string}`
 
+export interface SuperContractOptions {
+  /** Optional salt for CREATE2 deployment */
+  salt?: `0x${string}`
+  /** Optional address to interact with existing contract (e.g. predeployed contracts) */
+  address?: Address
+}
+
 export class SuperContract {
   public readonly address: Address
 
@@ -15,9 +22,13 @@ export class SuperContract {
     private abi: Abi,
     private bytecode: `0x${string}`,
     private constructorArgs: any[] = [],
-    private salt: `0x${string}` = defaultSalt,
-    address?: Address
+    options?: Partial<SuperContractOptions>
   ) {
+    const { salt = defaultSalt, address } = options || {}
+
+    // Store salt for CREATE2 deployment
+    this.salt = salt
+
     // Use provided address or compute deterministic address
     if (address) {
       this.address = address
@@ -30,6 +41,8 @@ export class SuperContract {
       this.address = this.computeAddress(deployData)
     }
   }
+
+  private salt: `0x${string}`
 
   private getClients(chainId: number) {
     const rpcUrl = this.config.getRpcUrl(chainId)
