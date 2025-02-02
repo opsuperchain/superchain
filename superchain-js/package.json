@@ -1,6 +1,6 @@
 {
   "name": "@superchain/js",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "A library for deploying and managing contracts across multiple EVM chains",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
