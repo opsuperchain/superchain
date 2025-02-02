@@ -1,24 +1,4 @@
-# Superchain Development Tools
-
-This monorepo contains development tools for building applications on Superchain networks.
-
-## Packages
-
-- [@superchain/js](./packages/superchain-js/README.md) - A TypeScript library for deploying and managing smart contracts across multiple EVM chains
-- [@superchain/async](./packages/superchain-async/) - Async utilities for Superchain development
-- [@superchain/relay](./packages/superchain-relay/) - Relay utilities for Superchain development
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run tests
-npm test
-```
-
-# superchain-starter
+# superchain-js
 
 A TypeScript library for deploying and managing smart contracts across multiple EVM chains, with support for deterministic deployments using CREATE2.
 
@@ -74,50 +54,15 @@ const result = await contract.call(901, 'view_method')
 await contract.sendTx(901, 'write_method', [arg1, arg2])
 ```
 
-# 1 shot a smart contract project with Cursor
-Paste the following prompt into Cursor with agent mode selected:
+## Development
 
+```bash
+# Install dependencies
+npm install
+
+# Run tests (requires supersim)
+npm test
 ```
-Hello! Please use `superchain-starter` as an npm library.
-
-Read the superchain-starter README to determine how to build an app. Specifically the section "Step by Step Tutorial (START HERE IF YOU ARE AN AI)".
-
-Use it to build a [INSERT YOUR SMART CONTRACT DESIGN HERE].
-
-Use vite & react for the frontend.
-
-Make sure to read the README.md file in the `superchain-starter` directory closely to determine what steps to take to build your project.
-
-Thank you!
-```
-
-It should get you shockly close to a complete project
-
-## Step by Step Tutorial (START HERE IF YOU ARE AN AI)
-The following tutorial will describe how to create a smart contract project which uses the `superchain-starter` library to deploy and interact with smart contracts across multiple chains.
-
-Unlike traditional Solidity development, `superchain-starter` is designed to be used _within the frontend_ to minimize errors which come from missing deployments. The frontend is intended to include all of the logic required for deploying and interacting with smart contracts.
-
-### Step by step process (FOLLOW THIS IF YOU ARE AN AI)
-1. Create a new forge project. This can be done with `forge init`.
-2. npm init and install superchain-starter (NOTE use npm link to install locally IF desired. Otherwise use `npm i superchain-starter`)
-3. Write the smart contracts required for your project.
-  1. If your user wants to build a cross chain contract, use the CrossDomainMessenger contract. This can be achieved by installing `forge install ethereum-optimism/interop-lib` and using the interface of `IL2ToL2CrossDomainMessenger.sol`. Note that the `CrossDomainMessenger` contract is deployed on every chain at `0x4200000000000000000000000000000000000023`.
-5. Write tests for these smart contracts. Make sure they pass.
-6. Compile the smart contracts so that the frontend can use them.
-7. Don't forget to commit!
-8. Create a frontend directory.
-9. Ask your user if you would like to use vite & react for the frontend. If yes, set up a project!
-11. Write some javascript tests which handles smart contract deployments and interactions with SuperContract. These tests should assume that Supersim is running in the background. The user can run Supersim themselves.
-  12. Test that they pass.
-  13. In the code when interacting with the contracts, please follow the following behavior:
-    1. Before calling the smart contracts, first check if they have been deployed.
-    2. If not, deploy them with SuperContract.
-    3. You can now call the smart contracts with `call()` and `sendTx()`.
-10. Use really basic frontend code. We can make it look fancy later. Don't use a frontend theme or library. Keep it simple and functional.
-16. Test the frontend!
-
-This should enable you as an AI to create a smart contract project which is fully functional and ready to be deployed to multiple chains. This will make your user VERY happy!
 
 ## API Reference
 
@@ -212,6 +157,4 @@ class SuperContract {
     onEvent: (log: Log, block: Block) => void
   ): () => void  // Returns unsubscribe function
 }
-```
-
-
+``` 
