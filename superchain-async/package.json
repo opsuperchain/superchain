@@ -13,6 +13,7 @@
     "test": "vitest run",
     "pretest-local": "npm run link-local",
     "test-local": "vitest run",
+    "test-local-rebuild": "cd ../superchain-js && npm run build && cd ../superchain-async && npm run test-local",
     "prepublishOnly": "npm run build",
     "link-local": "npm link ../superchain-js"
   },
