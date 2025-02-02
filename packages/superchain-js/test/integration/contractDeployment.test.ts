@@ -350,4 +350,4 @@ describe('Contract Deployment Integration', () => {
       expect(version).toBeTruthy() // Version should be non-empty string
     }
   }, 60000)
-}) 
+})

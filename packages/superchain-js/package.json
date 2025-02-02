@@ -1,0 +1,44 @@
+{
+  "name": "@superchain/js",
+  "version": "0.0.8",
+  "description": "A library for deploying and managing contracts across multiple EVM chains",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "supersim": "supersim --interop.autorelay",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ethereum",
+    "smart-contracts",
+    "blockchain",
+    "web3",
+    "multichain",
+    "create2",
+    "deterministic-deployment"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opsuperchain/superchain.git"
+  },
+  "dependencies": {
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@semantic-release/git": "^10.0.1",
+    "@types/node": "^18.15.11",
+    "semantic-release": "^23.0.0",
+    "supersim": "^0.0.7",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.3",
+    "vitest": "^1.2.1"
+  }
+}

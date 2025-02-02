@@ -24,9 +24,13 @@ coverage/
 .env.*.local
 
 # Logs
-logs/
+.logs/
 *.log
 
 # Foundry
-out/
-cache/
+**/out/
+**/cache/
+**/lib/
+
+# Turborepo
+.turbo/

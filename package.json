@@ -1,42 +1,16 @@
 {
-  "name": "superchain-starter",
-  "version": "0.0.8",
-  "description": "A library for deploying and managing contracts across multiple EVM chains",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
+  "name": "superchain",
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build": "tsup",
-    "test": "vitest run",
-    "prepublishOnly": "npm run build"
-  },
-  "keywords": [
-    "ethereum",
-    "smart-contracts",
-    "blockchain",
-    "web3",
-    "multichain",
-    "create2",
-    "deterministic-deployment"
-  ],
-  "author": "",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/opsuperchain/superchain-starter.git"
-  },
-  "dependencies": {
-    "viem": "^2.0.0"
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
-    "@semantic-release/git": "^10.0.1",
-    "@types/node": "^18.15.11",
-    "semantic-release": "^23.0.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.3",
-    "vitest": "^1.2.1"
+    "turbo": "^1.12.2"
   }
-}
+} 
