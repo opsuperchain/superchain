@@ -7,6 +7,9 @@ on:
     types: 
       - completed
 
+permissions:
+  contents: write
+
 jobs:
   release:
     name: Release
@@ -24,6 +27,7 @@ jobs:
         with:
           node-version: '23.x'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -36,11 +40,54 @@ jobs:
       - name: Install dependencies
         run: just install
         
-      - name: Build packages
-        run: just build
+      - name: Get latest commit message
+        id: commit
+        run: |
+          message=$(git log -1 --pretty=%B)
+          echo "message=$message" >> $GITHUB_OUTPUT
+
+      - name: Prepare version bump
+        id: bump
+        run: |
+          cd packages/superchain-js
+          current_version=$(node -p "require('./package.json').version")
+          IFS='.' read -r major minor patch <<< "$current_version"
+          
+          if [[ "${{ steps.commit.outputs.message }}" == fix:* ]]; then
+            new_version="$major.$minor.$((patch + 1))"
+            echo "Bumping patch version for fix"
+          elif [[ "${{ steps.commit.outputs.message }}" == feat:* ]]; then
+            new_version="$major.$((minor + 1)).0"
+            echo "Bumping minor version for feature"
+          else
+            new_version="$current_version"
+            echo "No version bump needed"
+          fi
+          
+          if [ "$new_version" != "$current_version" ]; then
+            echo "Updating version to $new_version"
+            npm version $new_version --no-git-tag-version
+            echo "bumped=true" >> $GITHUB_OUTPUT
+          else
+            echo "bumped=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "version=$new_version" >> $GITHUB_OUTPUT
         
-      - name: Release
+      - name: Build and Release
+        if: steps.bump.outputs.bumped == 'true'
+        id: release
+        run: |
+          export NPM_TOKEN="${{ secrets.NPM_TOKEN }}"
+          just release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: cd packages/superchain-js && npx semantic-release 
+
+      - name: Commit version bump
+        if: steps.bump.outputs.bumped == 'true' && success()
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add packages/superchain-js/package.json
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+          git push 

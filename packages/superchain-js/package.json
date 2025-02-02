@@ -33,9 +33,7 @@
     "viem": "^2.0.0"
   },
   "devDependencies": {
-    "@semantic-release/git": "^10.0.1",
     "@types/node": "^18.15.11",
-    "semantic-release": "^23.0.0",
     "supersim": "^0.0.7",
     "tsup": "^8.0.0",
     "typescript": "^5.0.3",

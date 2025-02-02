@@ -33,3 +33,16 @@ lint:
 clean:
     @echo "Cleaning node_modules in packages..."
     rm -rf packages/*/node_modules 
+
+# Release command: publishes the superchain-js package to npm
+release: build
+    #!/usr/bin/env bash
+    cd packages/superchain-js
+    if [ -z "$NPM_TOKEN" ]; then
+        echo "Error: NPM_TOKEN environment variable is not set"
+        exit 1
+    fi
+    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+    echo "Publishing superchain-js..."
+    npm publish --access public
+    rm -f .npmrc 
