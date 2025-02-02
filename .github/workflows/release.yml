@@ -73,6 +73,9 @@ jobs:
           fi
           
           echo "version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Build packages
+        run: just build
         
       - name: Build and Release
         if: steps.bump.outputs.bumped == 'true'

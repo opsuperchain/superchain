@@ -31,6 +31,9 @@ jobs:
       - name: Force install rollup optional dependency
         run: cd superchain-js && npm install @rollup/rollup-linux-x64-gnu --no-save
       
+      - name: Build packages
+        run: just build
+      
       - name: Run tests
         run: just test
         env:

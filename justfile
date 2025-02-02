@@ -13,16 +13,22 @@ _check-foundry:
 install: _check-foundry
     @echo "Installing dependencies for superchain-js..."
     cd superchain-js && npm install
+    @echo "Installing dependencies for superchain-async..."
+    cd superchain-async && npm install
 
-# Build command: builds the superchain-js package
+# Build command: builds both packages
 build:
     @echo "Building superchain-js..."
     cd superchain-js && npm run build
+    @echo "Building superchain-async..."
+    cd superchain-async && npm run build
 
-# Test command: runs tests for the superchain-js package
+# Test command: runs tests for both packages
 test: _check-foundry
     @echo "Running tests for superchain-js..."
     cd superchain-js && npm test
+    @echo "Running tests for superchain-async (with local superchain-js)..."
+    cd superchain-async && npm run test-local
 
 # Lint command: lints the superchain-js package
 lint:

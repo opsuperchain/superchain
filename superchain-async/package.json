@@ -1,0 +1,28 @@
+{
+  "name": "@superchain/async",
+  "version": "0.0.1",
+  "description": "Async utilities for Superchain development",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "echo 'Skipping build for now...'",
+    "test": "vitest run",
+    "pretest-local": "npm run link-local",
+    "test-local": "vitest run",
+    "prepublishOnly": "npm run build",
+    "link-local": "npm link ../superchain-js"
+  },
+  "dependencies": {
+    "@superchain/js": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.3",
+    "vitest": "^1.6.0"
+  }
+}
