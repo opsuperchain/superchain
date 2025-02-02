@@ -12,18 +12,21 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '23.x'
           cache: 'npm'
-      
+          
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+      
+      - name: Force install rollup optional dependency
+        run: npm install @rollup/rollup-linux-x64-gnu --no-save
       
       - name: Run tests
         run: npm test
