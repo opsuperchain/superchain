@@ -32,8 +32,8 @@ import { StandardSuperConfig, Wallet, getSuperContract } from 'superchain-starte
 
 // Configure chains
 const config = new StandardSuperConfig({
-  901: 'http://127.0.0.1:9545',
-  902: 'http://127.0.0.1:9546'
+  901: 'http://localhost:9545',
+  902: 'http://localhost:9546'
 })
 
 // Create wallet with Anvil's default private key
@@ -75,8 +75,8 @@ interface SuperConfig {
 
 // Initialize with RPC URLs for each chain
 const config = new StandardSuperConfig({
-  901: 'http://127.0.0.1:9545',
-  902: 'http://127.0.0.1:9546'
+  901: 'http://localhost:9545',
+  902: 'http://localhost:9546'
 })
 ```
 

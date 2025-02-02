@@ -54,8 +54,8 @@ Browser Usage Example:
 
   // Example contract setup
   const config = new StandardSuperConfig({
-    901: 'http://127.0.0.1:9545',  // Chain A
-    902: 'http://127.0.0.1:9546'   // Chain B
+    901: 'http://localhost:9545',  // Chain A
+    902: 'http://localhost:9546'   // Chain B
   })
 
   // Your contract's ABI and bytecode

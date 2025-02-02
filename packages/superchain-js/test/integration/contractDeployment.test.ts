@@ -42,11 +42,11 @@ describe('Contract Deployment Integration', () => {
   
   // Chain A configuration
   const CHAIN_A_ID = 901
-  const CHAIN_A_RPC_URL = 'http://127.0.0.1:9545'
+  const CHAIN_A_RPC_URL = 'http://localhost:9545'
   
   // Chain B configuration
   const CHAIN_B_ID = 902
-  const CHAIN_B_RPC_URL = 'http://127.0.0.1:9546'
+  const CHAIN_B_RPC_URL = 'http://localhost:9546'
   
   const config = new StandardSuperConfig({
     [CHAIN_A_ID]: CHAIN_A_RPC_URL,
