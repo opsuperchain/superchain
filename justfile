@@ -1,7 +1,16 @@
 # justfile
 
-# Install command: installs dependencies for all packages
-install:
+# Check if foundry is installed
+_check-foundry:
+    #!/usr/bin/env bash
+    if ! command -v forge &> /dev/null; then
+        echo "Error: Foundry is not installed. Please install foundry first: https://book.getfoundry.sh/getting-started/installation"
+        exit 1
+    fi
+    echo "Foundry is installed"
+
+# Install dependencies (requires foundry)
+install: _check-foundry
     @echo "Installing dependencies for superchain-js..."
     cd packages/superchain-js && npm install
 
@@ -11,7 +20,7 @@ build:
     cd packages/superchain-js && npm run build
 
 # Test command: runs tests for the superchain-js package
-test:
+test: _check-foundry
     @echo "Running tests for superchain-js..."
     cd packages/superchain-js && npm test
 

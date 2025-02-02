@@ -25,6 +25,11 @@ jobs:
           node-version: '23.x'
           cache: 'npm'
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
       - name: Install just
         uses: extractions/setup-just@v1
           
