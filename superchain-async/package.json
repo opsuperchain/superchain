@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "echo 'Skipping build for now...'",
+    "build": "forge build",
     "test": "vitest run",
     "pretest-local": "npm run link-local",
     "test-local": "vitest run",
