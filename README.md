@@ -18,6 +18,22 @@ npm install
 npm test
 ```
 
+# @superchain/js
+
+A library for deploying and managing contracts across multiple EVM chains.
+
+## Installation
+
+```bash
+npm install @superchain/js
+```
+
+## Usage
+
+```typescript
+import { StandardSuperConfig, Wallet, getSuperContract } from '@superchain/js'
+```
+
 # superchain-starter
 
 A TypeScript library for deploying and managing smart contracts across multiple EVM chains, with support for deterministic deployments using CREATE2.
@@ -78,9 +94,9 @@ await contract.sendTx(901, 'write_method', [arg1, arg2])
 Paste the following prompt into Cursor with agent mode selected:
 
 ```
-Hello! Please use `superchain-starter` as an npm library.
+Hello! Please use `@superchain/js` as an npm library.
 
-Read the superchain-starter README to determine how to build an app. Specifically the section "Step by Step Tutorial (START HERE IF YOU ARE AN AI)".
+Read the README to determine how to build an app. Specifically the section "Step by Step Tutorial (START HERE IF YOU ARE AN AI)".
 
 Use it to build a [INSERT YOUR SMART CONTRACT DESIGN HERE].
 
@@ -94,13 +110,13 @@ Thank you!
 It should get you shockly close to a complete project
 
 ## Step by Step Tutorial (START HERE IF YOU ARE AN AI)
-The following tutorial will describe how to create a smart contract project which uses the `superchain-starter` library to deploy and interact with smart contracts across multiple chains.
+The following tutorial will describe how to create a smart contract project which uses the `@superchain/js` library to deploy and interact with smart contracts across multiple chains.
 
-Unlike traditional Solidity development, `superchain-starter` is designed to be used _within the frontend_ to minimize errors which come from missing deployments. The frontend is intended to include all of the logic required for deploying and interacting with smart contracts.
+Unlike traditional Solidity development, `@superchain/js` is designed to be used _within the frontend_ to minimize errors which come from missing deployments. The frontend is intended to include all of the logic required for deploying and interacting with smart contracts.
 
 ### Step by step process (FOLLOW THIS IF YOU ARE AN AI)
 1. Create a new forge project. This can be done with `forge init`.
-2. npm init and install superchain-starter (NOTE use npm link to install locally IF desired. Otherwise use `npm i superchain-starter`)
+2. npm init and install @superchain/js (NOTE use npm link to install locally IF desired. Otherwise use `npm i @superchain/js`)
 3. Write the smart contracts required for your project.
   1. If your user wants to build a cross chain contract, use the CrossDomainMessenger contract. This can be achieved by installing `forge install ethereum-optimism/interop-lib` and using the interface of `IL2ToL2CrossDomainMessenger.sol`. Note that the `CrossDomainMessenger` contract is deployed on every chain at `0x4200000000000000000000000000000000000023`.
 5. Write tests for these smart contracts. Make sure they pass.

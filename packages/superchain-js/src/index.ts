@@ -1,5 +1,5 @@
 /**
- * @file Main entry point for the superchain-starter library
+ * @file Main entry point for the @superchain/js library
  */
 
 // Export all Super components
@@ -50,7 +50,7 @@ Browser Usage Example:
 
 <script type="module">
   // Import from CDN (replace VERSION with actual version)
-  import { StandardSuperConfig, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter@VERSION/dist/index.js'
+  import { StandardSuperConfig, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/@superchain/js@VERSION/dist/index.js'
 
   // Example contract setup
   const config = new StandardSuperConfig({

@@ -15,20 +15,20 @@ A TypeScript library for deploying and managing smart contracts across multiple 
 
 ### NPM
 ```bash
-npm install superchain-starter
+npm install @superchain/js
 ```
 
 ### Browser (CDN)
 ```html
 <script type="module">
-  import { StandardSuperConfig, Wallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
+  import { StandardSuperConfig, Wallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/@superchain/js/dist/index.mjs'
 </script>
 ```
 
 ## Quick Start
 
 ```typescript
-import { StandardSuperConfig, Wallet, getSuperContract } from 'superchain-starter'
+import { StandardSuperConfig, Wallet, getSuperContract } from '@superchain/js'
 
 // Configure chains
 const config = new StandardSuperConfig({
