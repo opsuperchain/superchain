@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { StandardSuperConfig, SuperContract, SuperWallet } from '@superchain/js'
 import type { Abi } from 'viem'
-import ExampleAsyncEnabled from '../out/ExampleAsyncEnabled.sol/ExampleAsyncEnabled.json'
+import ExampleAsyncEnabled from '../../out/ExampleAsyncEnabled.sol/ExampleAsyncEnabled.json'
 
 test('MyCoolAsync callback loop', async () => {
     console.log('Starting test...')
