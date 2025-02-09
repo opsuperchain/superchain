@@ -46,8 +46,8 @@ async function waitForChain(rpcUrl: string, maxAttempts = 10) {
     return false;
 }
 
-// Start supersim before tests
-beforeAll(async () => {
+// Convert beforeAll to a global setup function
+export async function setup() {
     // Check if ports 9545 and 9546 are free; skip tests if not
     const ports = [9545, 9546];
     for (const port of ports) {
@@ -103,8 +103,13 @@ beforeAll(async () => {
         throw error;
     }
 
-    // Clean up after tests
-    return () => {
-        supersim.kill();
-    };
-}, 60000)  // Reduced timeout from 120000 to 60000 (60 seconds) 
+    // Store supersim process globally for teardown
+    globalThis.__SUPERSIM__ = supersim;
+}
+
+// Add teardown function
+export async function teardown() {
+    if (globalThis.__SUPERSIM__) {
+        globalThis.__SUPERSIM__.kill();
+    }
+} 

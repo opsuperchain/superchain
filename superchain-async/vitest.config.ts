@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    setupFiles: ['./test/setup.ts']
+    globalSetup: './test/setup.ts',
+    setupFiles: []  // Remove setupFiles since we're using globalSetup
   }
 }) 
