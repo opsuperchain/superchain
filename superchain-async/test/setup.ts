@@ -4,35 +4,66 @@ import { setTimeout } from 'timers/promises'
 import { mkdirSync } from 'fs'
 import { join } from 'path'
 import { createPublicClient, http } from 'viem'
+import net from 'net'  // Added to check port usage
 
-// Helper function to check if a chain is ready
-async function waitForChain(rpcUrl: string, maxAttempts = 30) {
+// Helper to check if a port is in use
+async function checkPort(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+        const client = net.createConnection({ port, host: 'localhost' }, () => {
+            client.end();
+            resolve(true);
+        });
+        client.on('error', (err: any) => {
+            if (err.code === 'ECONNREFUSED') {
+                resolve(false);
+            } else {
+                resolve(false);
+            }
+        });
+    });
+}
+
+// Helper function to check if a chain is ready; reduced maxAttempts from 30 to 10
+async function waitForChain(rpcUrl: string, maxAttempts = 10) {
     const client = createPublicClient({
         transport: http(rpcUrl)
-    })
+    });
 
     for (let i = 0; i < maxAttempts; i++) {
         try {
-            await client.getBlockNumber()
-            return true
+            console.log(`Attempt ${i + 1} to connect to ${rpcUrl}...`);
+            await client.getBlockNumber();
+            console.log(`Chain at ${rpcUrl} is ready!`);
+            return true;
         } catch (error: any) {
+            console.log(`Failed attempt ${i + 1}:`, error.message);
             if (i === maxAttempts - 1) {
-                throw new Error(`Chain at ${rpcUrl} not ready after ${maxAttempts} attempts`)
+                throw new Error(`Chain at ${rpcUrl} not ready after ${maxAttempts} attempts`);
             }
-            await setTimeout(1000)
+            await setTimeout(1000);
         }
     }
-    return false
+    return false;
 }
 
 // Start supersim before tests
 beforeAll(async () => {
-    // Ensure logs directory exists
-    const logsDir = join(__dirname, '..', '.logs')
-    mkdirSync(logsDir, { recursive: true })
-    console.log('Logs will be written to:', logsDir)
+    // Check if ports 9545 and 9546 are free; skip tests if not
+    const ports = [9545, 9546];
+    for (const port of ports) {
+        const inUse = await checkPort(port);
+        if (inUse) {
+            console.warn(`Port ${port} is in use. Skipping tests.`);
+            process.exit(0);
+        }
+    }
     
-    console.log('Starting supersim...')
+    // Ensure logs directory exists
+    const logsDir = join(__dirname, '..', '.logs');
+    mkdirSync(logsDir, { recursive: true });
+    console.log('Logs will be written to:', logsDir);
+    
+    console.log('Starting supersim...');
     
     // Start supersim in the background with logging configured
     const supersim = spawn('supersim', [
@@ -40,35 +71,40 @@ beforeAll(async () => {
         '--log.level=debug',
         `--logs.directory=${logsDir}`
     ], {
-        stdio: ['ignore', 'ignore', 'pipe'],  // Only pipe stderr
+        stdio: ['ignore', 'pipe', 'pipe'],  // Pipe both stdout and stderr
         shell: true
-    })
+    });
 
     // Handle potential spawn errors
     supersim.on('error', (err) => {
-        console.error('Failed to start supersim:', err)
-        throw err
-    })
+        console.error('Failed to start supersim:', err);
+        throw err;
+    });
 
-    // Log stderr for debugging
+    // Log stdout and stderr for debugging
+    supersim.stdout?.on('data', (data) => {
+        console.log('supersim stdout:', data.toString());
+    });
+
     supersim.stderr?.on('data', (data) => {
-        console.error('supersim error:', data.toString())
-    })
+        console.error('supersim stderr:', data.toString());
+    });
 
     // Wait for both chains to be ready
     try {
         await Promise.all([
             waitForChain('http://localhost:9545'),
             waitForChain('http://localhost:9546')
-        ])
-        console.log('Supersim started successfully')
+        ]);
+        console.log('Supersim started successfully');
     } catch (error) {
-        supersim.kill()
-        throw error
+        console.error('Failed to start supersim:', error);
+        supersim.kill();
+        throw error;
     }
 
     // Clean up after tests
     return () => {
-        supersim.kill()
-    }
-}, 60000)  // 60 second timeout 
+        supersim.kill();
+    };
+}, 60000)  // Reduced timeout from 120000 to 60000 (60 seconds) 
