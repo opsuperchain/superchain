@@ -11,6 +11,7 @@
   "scripts": {
     "build": "forge build",
     "test": "vitest run",
+    "forge:test": "supersim > /dev/null 2>&1 & sleep 3 && forge test -vv; pkill -f supersim",
     "pretest-local": "npm run link-local",
     "test-local": "vitest run",
     "test-local-rebuild": "cd ../superchain-js && npm run build && cd ../superchain-async && npm run test-local",
