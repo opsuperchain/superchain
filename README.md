@@ -31,7 +31,7 @@ npm install @superchain/js
 ## Usage
 
 ```typescript
-import { StandardSuperConfig, Wallet, getSuperContract } from '@superchain/js'
+import { StandardSuperConfig, SuperWallet, getSuperContract } from '@superchain/js'
 ```
 
 # superchain-starter
@@ -41,6 +41,7 @@ A TypeScript library for deploying and managing smart contracts across multiple 
 ## Features
 - 🔄 Deploy contracts to multiple chains with one interface
 - 🎯 Use CREATE2 for deterministic addresses across chains
+- 🚀 Automatic contract deployment when needed
 - 🔒 Type-safe contract interactions with TypeScript
 - 🌐 Works in Node.js and browsers (ESM)
 - ⚡ Built on [viem](https://viem.sh) for reliable blockchain interactions
@@ -57,14 +58,14 @@ npm install superchain-starter
 ### Browser (CDN)
 ```html
 <script type="module">
-  import { StandardSuperConfig, Wallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
+  import { StandardSuperConfig, SuperWallet, getSuperContract } from 'https://cdn.jsdelivr.net/npm/superchain-starter/dist/index.mjs'
 </script>
 ```
 
 ## Quick Start
 
 ```typescript
-import { StandardSuperConfig, Wallet, getSuperContract } from 'superchain-starter'
+import { StandardSuperConfig, SuperWallet, getSuperContract } from 'superchain-starter'
 
 // Configure chains
 const config = new StandardSuperConfig({
@@ -73,7 +74,7 @@ const config = new StandardSuperConfig({
 })
 
 // Create wallet with Anvil's default private key
-const wallet = new Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
+const wallet = new SuperWallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
 
 // Deploy and interact
 const contract = getSuperContract(
@@ -85,7 +86,6 @@ const contract = getSuperContract(
   '0xoptional_salt'
 )
 
-await contract.deploy(901)
 const result = await contract.call(901, 'view_method')
 await contract.sendTx(901, 'write_method', [arg1, arg2])
 ```
@@ -126,10 +126,7 @@ Unlike traditional Solidity development, `@superchain/js` is designed to be used
 9. Ask your user if you would like to use vite & react for the frontend. If yes, set up a project!
 11. Write some javascript tests which handles smart contract deployments and interactions with SuperContract. These tests should assume that Supersim is running in the background. The user can run Supersim themselves.
   12. Test that they pass.
-  13. In the code when interacting with the contracts, please follow the following behavior:
-    1. Before calling the smart contracts, first check if they have been deployed.
-    2. If not, deploy them with SuperContract.
-    3. You can now call the smart contracts with `call()` and `sendTx()`.
+  13. In the code when interacting with the contracts, use `call()` to read from the contract and `sendTx()` to write to the contract.
 10. Use really basic frontend code. We can make it look fancy later. Don't use a frontend theme or library. Keep it simple and functional.
 16. Test the frontend!
 
@@ -151,22 +148,22 @@ const config = new StandardSuperConfig({
 })
 ```
 
-### Wallet
+### SuperWallet
 ```typescript
-class Wallet {
+class SuperWallet {
   constructor(privateKey: string)
   getAccount(): Account     // Returns viem Account
 }
 
 // Use with Anvil's default private key
-const wallet = new Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
+const wallet = new SuperWallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80')
 ```
 
 ### getSuperContract
 ```typescript
 function getSuperContract(
   config: SuperConfig,       // Chain configurations
-  wallet: Wallet,           // Wallet instance
+  wallet: SuperWallet,           // Wallet instance
   abi: any[],              // Contract ABI
   bytecode: string,        // Contract bytecode
   constructorArgs?: any[], // Constructor arguments
@@ -201,24 +198,25 @@ const existingContract = getSuperContract(
 class SuperContract {
   readonly address: Address  // Deterministic CREATE2 address
 
-  // Deploy the contract to a specific chain
-  async deploy(chainId: number): Promise<TransactionReceipt>
+  // Deploy the contract to a specific chain (manual deployment)
+  async deployManual(chainId: number): Promise<TransactionReceipt>
 
   // Check if contract is deployed on a chain
   async isDeployed(chainId: number): Promise<boolean>
 
-  // Call a read-only method
+  // Call a read-only method (automatically deploys if needed)
   async call(
     chainId: number,
     functionName: string,
     args?: any[]
   ): Promise<any>
 
-  // Send a transaction to a method
+  // Send a transaction to a method (automatically deploys if needed)
   async sendTx(
     chainId: number,
     functionName: string,
-    args?: any[]
+    args?: any[],
+    value?: bigint
   ): Promise<TransactionReceipt>
 
   // Watch for contract events
