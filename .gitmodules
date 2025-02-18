@@ -10,3 +10,6 @@
 [submodule "superchain-async/lib/forge-std"]
 	path = superchain-async/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "superchain-async"]
+	path = superchain-async
+	url = git@github.com:opsuperchain/superchain-async.git
