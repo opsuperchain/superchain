@@ -3,13 +3,13 @@
  */
 
 // Export all Super components
-export { Wallet as SuperWallet } from './Wallet'
+export { SuperWallet } from './SuperWallet'
 export { SuperContract } from './SuperContract'
 export { SuperConfig, StandardSuperConfig, ChainIdNotFoundError } from './SuperConfig'
 export { CREATE2_FACTORY_ADDRESS } from './constants'
 
 // Import types we need
-import { Wallet } from './Wallet'
+import { SuperWallet } from './SuperWallet'
 import { SuperContract, SuperContractOptions } from './SuperContract'
 import { SuperConfig } from './SuperConfig'
 import type { Address } from 'viem'
@@ -28,13 +28,13 @@ import type { Address } from 'viem'
  */
 export function getSuperContract(
   config: SuperConfig,
-  wallet: Wallet | `0x${string}`,
+  wallet: SuperWallet | `0x${string}`,
   abi: any[],
   bytecode: `0x${string}`,
   constructorArgs: any[] = [],
   options?: Partial<SuperContractOptions>
 ): SuperContract {
-  const superWallet = wallet instanceof Wallet ? wallet : new Wallet(wallet)
+  const superWallet = wallet instanceof SuperWallet ? wallet : new SuperWallet(wallet)
   return new SuperContract(
     config,
     superWallet,
