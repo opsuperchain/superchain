@@ -251,7 +251,7 @@ describe('Contract Deployment Integration', () => {
 
     // Deploy using CREATE2
     console.log(`Deploying contract using CREATE2 on chain ${chainId}...`)
-    const receipt = await contract.deploy(chainId)
+    const receipt = await contract.deployManual(chainId)
     console.log(`CREATE2 deployment receipt on chain ${chainId}:`, receipt)
 
     expect(receipt.status).toBe('success')
@@ -297,13 +297,13 @@ describe('Contract Deployment Integration', () => {
 
     // Deploy on Chain A
     if (chainStates[CHAIN_A_ID].isRunning && chainStates[CHAIN_A_ID].hasBalance) {
-      const receiptA = await contract.deploy(CHAIN_A_ID)
+      const receiptA = await contract.deployManual(CHAIN_A_ID)
       expect(receiptA.status).toBe('success')
     }
 
     // Deploy on Chain B
     if (chainStates[CHAIN_B_ID].isRunning && chainStates[CHAIN_B_ID].hasBalance) {
-      const receiptB = await contract.deploy(CHAIN_B_ID)
+      const receiptB = await contract.deployManual(CHAIN_B_ID)
       expect(receiptB.status).toBe('success')
     }
 
@@ -349,5 +349,85 @@ describe('Contract Deployment Integration', () => {
       console.log(`CrossDomainMessenger version on chain ${chainId}:`, version)
       expect(version).toBeTruthy() // Version should be non-empty string
     }
+  }, 60000)
+
+  // New automatic deployment tests
+  it('should automatically deploy when calling read function', async () => {
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const contract = getSuperContract(
+      config,
+      wallet,
+      TEST_CONTRACT_ABI,
+      TEST_CONTRACT_BYTECODE,
+      [100n]
+    )
+
+    // First verify contract is not deployed
+    const isDeployedBefore = await contract.isDeployed(CHAIN_A_ID)
+    expect(isDeployedBefore).toBe(false)
+
+    // Call read function - should trigger automatic deployment
+    const value = await contract.call(CHAIN_A_ID, 'x')
+    expect(value).toBe(100n)
+
+    // Verify contract is now deployed
+    const isDeployedAfter = await contract.isDeployed(CHAIN_A_ID)
+    expect(isDeployedAfter).toBe(true)
+  }, 60000)
+
+  it('should automatically deploy when sending transaction', async () => {
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const contract = getSuperContract(
+      config,
+      wallet,
+      TEST_CONTRACT_ABI,
+      TEST_CONTRACT_BYTECODE,
+      [100n]
+    )
+
+    // First verify contract is not deployed
+    const isDeployedBefore = await contract.isDeployed(CHAIN_B_ID)
+    expect(isDeployedBefore).toBe(false)
+
+    // Send transaction - should trigger automatic deployment
+    const receipt = await contract.sendTx(CHAIN_B_ID, 'setX', [42n])
+    expect(receipt.status).toBe('success')
+
+    // Verify contract is now deployed and value is updated
+    const isDeployedAfter = await contract.isDeployed(CHAIN_B_ID)
+    expect(isDeployedAfter).toBe(true)
+
+    const value = await contract.call(CHAIN_B_ID, 'x')
+    expect(value).toBe(42n)
+  }, 60000)
+
+  it('should not redeploy if contract is already deployed', async () => {
+    const wallet = new SuperWallet(ANVIL_PRIVATE_KEY)
+    const uniqueSalt = `0x${Date.now().toString(16).padStart(64, '0')}` as `0x${string}`
+    const contract = getSuperContract(
+      config,
+      wallet,
+      TEST_CONTRACT_ABI,
+      TEST_CONTRACT_BYTECODE,
+      [100n],
+      { salt: uniqueSalt }
+    )
+
+    // First deploy manually
+    const receipt = await contract.deployManual(CHAIN_A_ID)
+    expect(receipt.status).toBe('success')
+
+    // Set initial value
+    const initialValue = await contract.call(CHAIN_A_ID, 'x')
+    expect(initialValue).toBe(100n)
+
+    // Change value
+    await contract.sendTx(CHAIN_A_ID, 'setX', [200n])
+    const updatedValue = await contract.call(CHAIN_A_ID, 'x')
+    expect(updatedValue).toBe(200n)
+
+    // Call again - should use existing deployment
+    const finalValue = await contract.call(CHAIN_A_ID, 'x')
+    expect(finalValue).toBe(200n)
   }, 60000)
 })

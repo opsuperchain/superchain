@@ -1,6 +1,6 @@
 import { Address, TransactionReceipt, Abi, keccak256, toHex, getCreate2Address, Log, Block, encodeFunctionData, encodeDeployData, createPublicClient, createWalletClient, http } from 'viem'
 import { CREATE2_FACTORY_ADDRESS } from './constants'
-import { Wallet } from './Wallet'
+import { SuperWallet } from './SuperWallet'
 import { SuperConfig } from './SuperConfig'
 
 // Default salt value
@@ -18,7 +18,7 @@ export class SuperContract {
 
   constructor(
     private config: SuperConfig,
-    private wallet: Wallet,
+    private wallet: SuperWallet,
     private abi: Abi,
     private bytecode: `0x${string}`,
     private constructorArgs: any[] = [],
@@ -84,7 +84,12 @@ export class SuperContract {
     })
   }
 
-  async deploy(chainId: number): Promise<TransactionReceipt> {
+  /**
+   * Manually deploy the contract using CREATE2.
+   * Note: This is a low-level function. In most cases, you don't need to call this directly
+   * as call() and sendTx() will automatically deploy the contract if needed.
+   */
+  async deployManual(chainId: number): Promise<TransactionReceipt> {
     const { publicClient, walletClient } = this.getClients(chainId)
     const deployData = encodeDeployData({
       abi: this.abi,
@@ -146,7 +151,18 @@ export class SuperContract {
     }
   }
 
+  private async ensureDeployed(chainId: number): Promise<void> {
+    const isDeployed = await this.isDeployed(chainId)
+    if (!isDeployed) {
+      console.debug('Contract not deployed, deploying first...')
+      await this.deployManual(chainId)
+      console.debug('Contract deployed successfully')
+    }
+  }
+
   async sendTx(chainId: number, functionName: string, args: any[] = [], value: bigint = BigInt(0)): Promise<TransactionReceipt> {
+    await this.ensureDeployed(chainId)
+
     const { publicClient, walletClient } = this.getClients(chainId)
     console.debug(`Preparing to send transaction for function ${functionName} with args:`, args)
 
@@ -194,6 +210,8 @@ export class SuperContract {
   }
 
   async call(chainId: number, functionName: string, args: any[] = []): Promise<any> {
+    await this.ensureDeployed(chainId)
+
     const { publicClient } = this.getClients(chainId)
     console.debug(`Calling function ${functionName} with args:`, args)
     
