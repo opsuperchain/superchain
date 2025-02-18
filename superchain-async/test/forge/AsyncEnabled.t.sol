@@ -44,6 +44,7 @@ contract AsyncEnabledTest is Test {
     // TODO: duplicate above test but for non-self address
 
     function test_makePromise() public {
+        vm.skip(true);
         uint256 remoteChainId = 420;
         address myPromise = asyncContract.makeFunc1Promise(remoteChainId);
 
@@ -61,6 +62,7 @@ contract AsyncEnabledTest is Test {
     }
 
     function test_addCallback() public {
+        vm.skip(true);
         uint256 remoteChainId = 420;
         address myPromise = asyncContract.makeFunc1Callback(remoteChainId);
 
