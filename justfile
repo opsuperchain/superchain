@@ -27,6 +27,13 @@ build:
 test: _check-foundry
     @echo "Running tests for superchain-js..."
     cd superchain-js && npm test
+    @echo "Checking if port 9545 is free..."
+    #!/usr/bin/env bash
+    while lsof -i :9545 >/dev/null 2>&1; do \
+        echo "Waiting for port 9545 to be released..."; \
+        sleep 1; \
+    done
+    echo "Port 9545 is free"
     @echo "Running tests for superchain-async (with local superchain-js)..."
     cd superchain-async && npm run test-local
 
